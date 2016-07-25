@@ -16,8 +16,47 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
+    response.subtitle = 'Restaurante Universitário'
     response.flash = T("Hello World")
     return dict(message=T('Welcome to web2py!'))
+
+
+def ler_horario():
+    """registro dos horários das refeições"""
+    # TODO: incluir política de nível de acesso
+    response.subtitle = 'Nova refeição'
+    # record = db.refeicoes(request.args(0)) or redirect(URL('ler_horario'))
+    form = SQLFORM(db.refeicoes, submit_button='Salvar',
+                   labels={'descricao': 'Descrição', 'hr_inicio':'Hora de Início',
+                           'hr_fim': 'Hora do Término', 'preco_total': 'Preço Total',
+                           'preco_subsidiado': 'Preço Subsidiado'},
+                   separator=': ', upload=URL('download'))
+
+    registros = db(db.refeicoes).select()
+
+    if form.process().accepted:
+        response.flash ='Cadastrado com sucesso!'
+    elif form.errors:
+        response.flash ='Há valores inválidos!'
+
+    return dict(form=form, registros=registros)
+
+
+def download():
+    return response.download(request, db)
+
+# TODO: definir leitura das codigos (conforme descrição)
+
+def ler_codigo():
+    """leitura dos codigos"""
+
+    form = ''
+
+    return dict(form=form)
+
+
+# TODO: definir registro do log de refeicoes
+
 
 
 def user():

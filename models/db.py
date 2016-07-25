@@ -10,11 +10,11 @@
 # request.requires_https()
 
 ## app configuration made easy. Look inside private/appconfig.ini
-from unirio.login import UNIRIOLDAP
+# from unirio.login import UNIRIOLDAP
 
 from gluon import current
 ## once in production, remove reload=True to gain full speed
-from unirio.mail import EmailBasico
+# from unirio.mail import EmailBasico
 
 if not request.env.web2py_runtime_gae:
     ## if NOT running on Google App Engine use SQLite or other DB
@@ -64,7 +64,7 @@ auth.settings.actions_disabled = [
 db.auth_user.username.label = 'CPF'
 
 from gluon.contrib.login_methods.ldap_auth import ldap_auth
-auth.settings.login_methods=[ldap_auth(mode='uid', server=UNIRIOLDAP.LDAP_TESTE, base_dn='ou=people,dc=unirio,dc=br')]
+# auth.settings.login_methods = [ldap_auth(mode='uid', server=UNIRIOLDAP.LDAP_TESTE, base_dn='ou=people,dc=unirio,dc=br')]
 # auth.settings.login_onaccept.append(login_helper.adiciona_info_pessoa_logada)
 
 ## configure email
@@ -74,7 +74,7 @@ mail.settings.sender = myconf.take('smtp.sender')
 mail.settings.login = myconf.take('smtp.login')
 
 
-current.mailer = EmailBasico(mail, response.render)
+# current.mailer = EmailBasico(mail, response.render)
 
 
 
@@ -99,6 +99,36 @@ auth.settings.reset_password_requires_verification = True
 ## >>> rows=db(db.mytable.myfield=='value').select(db.mytable.ALL)
 ## >>> for row in rows: print row.id, row.myfield
 #########################################################################
+
+
+
+db = DAL('postgres://postgres:devdtic2@teste.sistemas.unirio.br/restaurante')
+
+db.define_table('refeicoes',
+                Field('descricao', 'string', length=100, label='Descrição'),
+                Field('hr_inicio', 'time', label='Início'),
+                Field('hr_fim', 'time', label='Termino'),
+                Field('preco_total', 'decimal(10,2)', label='Preço Normal'),
+                Field('preco_subsidiado', 'decimal(10,2)', label='Preço Subsidiado')
+                )
+
+db.define_table('tipo_leitura',
+                Field('descricao', 'string', requires=IS_IN_SET(['Lido', 'Pagamento Total', 'Pagamento Subsidiado'])))
+
+db.define_table('log_refeicoes',
+                Field('fk_refeicao', 'reference refeicoes'),  # Chave estrangeira: id/refeicoes
+                Field('fk_tipo_leitura', 'reference tipo_leitura'),  # Chave estrangeira: id/tipo_leitura
+                Field('timestamp', 'datetime', default=request.now),
+                Field('categoria', 'string', length=100),
+                Field('matricula', 'string', length=100))
+
+# TODO: definir validadores
+db.refeicoes.descricao.requires = IS_NOT_IN_DB(db, 'refeicoes.descricao')
+db.refeicoes.hr_inicio.requires = IS_TIME(error_message='Formato de hora: HH:MM')
+db.refeicoes.hr_fim.requires = IS_NOT_EMPTY()
+db.refeicoes.hr_fim.requires = IS_TIME(error_message='Formato de hora: HH:MM')
+#db.refeicoes.preco_total.requiquires = IS_? validador de moeda?
+# db.tipo_leitura.requires.descricao = IS_NOT_EMPTY()
 
 ## after defining tables, uncomment below to enable auditing
 # auth.enable_record_versioning(db)

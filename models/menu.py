@@ -8,7 +8,7 @@
 response.logo = DIV(A(IMG(_src=URL("static", "images/unirio/dtic-emblema-branco.png"), _class="small_logo_dtic"),
                       _href="http://www.unirio.br/dtic"),
                     A("DTIC/UNIRIO", _class="brand", _href="http://www.unirio.br/dtic"))
-response.title = 'Boilerplate - UNIRIO'
+response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
 response.subtitle = 'Boilerplate'
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
