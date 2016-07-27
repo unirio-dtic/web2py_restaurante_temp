@@ -15,20 +15,16 @@ def index():
         matricula = form.vars['matricula']
 
         try:
-            params = {
-                'LMIN': 0,
-                'LMAX': 1,
-                'MATRICULA': matricula,
-            }
+            params = {'MATRICULA': matricula}
             result = api.get('V_PESSOAS_DADOS', params)  # type: unirio.api.result.APIRestultObject
             descricao = result.content[0]
 
-            # Por enquanto deixa quieto isso até ver como lidar com a foto vinda do banco.
-            # eh_aluno = (desc.descricao_vinculo == 1 or desc.descricao_vinculo == 2)
-            # nome_da_tabela_de_foto = 'V_ALU_FOTO' if eh_aluno else 'V_FUNC_FOTO'
-            # result = api.get(nome_da_tabela_de_foto, params)
-            # if result.content[0]['foto'] is not None:
-            #     foto = result.content[0]['foto']
+            eh_aluno = (descricao['descricao_vinculo'] == 1 or descricao['descricao_vinculo'] == 2)
+
+            params = {'MATRICULA': matricula}
+            result = api.get('V_ALU_FOTO' if eh_aluno else 'V_FUNC_FOTO', params)
+            if result.content[0]['foto'] is not None:
+                url_foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
 
         except:
             response.flash = 'Erro na consulta ao banco de dados'
