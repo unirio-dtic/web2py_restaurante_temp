@@ -16,7 +16,7 @@ def index():
 
         try:
             params = {'MATRICULA': matricula}
-            result = api.get('V_PESSOAS_DADOS', params)  # type: unirio.api.result.APIRestultObject
+            result = api.get('V_PESSOAS_DADOS', params)
             descricao = result.content[0]
 
             eh_aluno = (descricao['descricao_vinculo'] == 1 or descricao['descricao_vinculo'] == 2)
