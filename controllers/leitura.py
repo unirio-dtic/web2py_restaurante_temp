@@ -21,10 +21,13 @@ def index():
 
             eh_aluno = (descricao['descricao_vinculo'] == 1 or descricao['descricao_vinculo'] == 2)
 
-            params = {'MATRICULA': matricula}
-            result = api.get('V_ALU_FOTO' if eh_aluno else 'V_FUNC_FOTO', params)
-            if result.content[0]['foto'] is not None:
-                url_foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+            try:
+                params = {'MATRICULA': matricula}
+                result = api.get('V_ALU_FOTO' if eh_aluno else 'V_FUNC_FOTO', params)
+                if result.content[0]['foto'] is not None:
+                    url_foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+            except:
+                response.flash = 'Foto não disponível'
 
         except:
             response.flash = 'Erro na consulta ao banco de dados'
