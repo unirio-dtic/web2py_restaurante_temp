@@ -11,7 +11,7 @@ def index():
     refeicao = busca_refeicao_atual()
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
-    response.subtitle = 'Controle de refeições - ' + str(refeicao[0].descricao).upper()
+    response.subtitle = 'Controle de refeições - ' + str(refeicao.descricao).upper()
 
     form = FORM(T('Matrícula: '),
                 INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
@@ -29,7 +29,7 @@ def index():
         if foto is not None:
             src_foto = foto
 
-        registra_leitura(refeicao['id'], form.vars['matricula'], dados['descricao_vinculo'])
+        registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
 
         response.flash = 'Lido'
 
@@ -41,15 +41,22 @@ def index():
     else:
         response.flash = 'Insira a matrícula'
 
-    texto = ''
-    listar_botoes = []
-    botoes = []
-    for row in db(db.refeicoes.descricao != '').select():
-        texto += ' %s, ' % str(row['descricao'])
-        botoes.append(TAG.button(row['descricao'], _type='button', _='disable'))
-    form2 = SQLFORM.factory(db=None, buttons=botoes)
+    horarios = []
+    texto_debug = []
+    for row in db(db.refeicoes.descricao != '').select():  # todo rever a condicao != ''
+        if row.id is refeicao.id:
+            horarios.append(SPAN(row.descricao + ' - Atual'))
+        else:
+            horarios.append(SPAN(row.descricao))
+        texto_debug.append(' %s, ' % str(row.descricao))  # debug
 
-    return dict(form=form, desc=dados, src_foto=src_foto, refeicao=refeicao, dbug=texto, form2=form2)
+    form2 = FORM(
+        INPUT(_name='but_pag_total', _type='button', _value=T("Pagamento total: R$") + refeicao.preco_total, _='disable'),
+        INPUT(_name='but_pag_subs', _type='button', _value=T("Pagamento subsidiado: R$") + refeicao.preco_subsidiado, _='disable')
+    )
+
+    return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto, form2=form2, horarios=horarios, dbug=texto_debug)
+
 
 def busca_dados_por_matricula(matricula):
 
@@ -91,7 +98,7 @@ def registra_leitura(refeicao, matricula, categoria):
 
 
 def busca_refeicao_atual():
-    return db(db.refeicoes.hr_fim >= response.meta.time).select()
+    return db(db.refeicoes.hr_fim >= response.meta.time).select()[0]
 
 
 def busca_refeicoes_realizadas():

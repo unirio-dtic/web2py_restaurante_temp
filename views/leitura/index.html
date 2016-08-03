@@ -8,7 +8,17 @@
         <div>{{=desc['nome']}}, {{=desc['matricula']}}, {{=desc['descricao_vinculo']}}</div>
 {{pass}}
 </div>
-<div>
-{{=form2}}
+
+<div align="center">
+    {{for horario in horarios:}}
+        {{=horario}}
+    {{pass}}
 </div>
-       <p>{{=dbug}}</p>
+
+<div align="center">
+    {{=form2}}
+</div>
+
+<br><br><br>
+<h4>  DEBUG:  </h4>
+<p>{{=dbug}}</p>

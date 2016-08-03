@@ -64,7 +64,7 @@ auth.settings.actions_disabled = [
 
 db.auth_user.username.label = 'CPF'
 
-#from gluon.contrib.login_methods.ldap_auth import ldap_auth
+# from gluon.contrib.login_methods.ldap_auth import ldap_auth
 # auth.settings.login_methods = [ldap_auth(mode='uid', server=UNIRIOLDAP.LDAP_TESTE, base_dn='ou=people,dc=unirio,dc=br')]
 # auth.settings.login_onaccept.append(login_helper.adiciona_info_pessoa_logada)
 
