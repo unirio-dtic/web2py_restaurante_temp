@@ -10,17 +10,17 @@ def index():
     src_foto = URL("static", "images/silhueta.png")
 
     refeicao_atual = busca_refeicao_atual()
-    descricao = None
+    dados = None
 
     # aqui virao coisas do form
     if form.accepts(request, session):
 
-        descricao = busca_por_matricula(form.vars['matricula'])
-        foto = busca_foto_por_matricula(form.vars['matricula'], descricao['vinculo_item'])
+        dados = busca_dados_por_matricula(form.vars['matricula'])
+        foto = busca_foto(dados)
         if foto is not None:
             src_foto = foto
 
-        registra_leitura(refeicao_atual['id'], form.vars['matricula'], descricao['descricao_vinculo'])
+        registra_leitura(refeicao_atual['id'], form.vars['matricula'], dados['descricao_vinculo'])
 
         response.flash = 'Lido'
 
@@ -33,28 +33,32 @@ def index():
         response.flash = 'Insira a matricula'
 
 
-    return dict(form=form, desc=descricao, foto=src_foto)
+    return dict(form=form, desc=dados, src_foto=src_foto)
 
 
-def busca_por_matricula(matricula):
+def busca_dados_por_matricula(matricula):
 
     params = {'MATRICULA': matricula}
     result = api.get('V_PESSOAS_DADOS', params)
     return result.content[0]
 
 
-def busca_foto_por_matricula(matricula, vinculo_id):
+def busca_foto(dados):
     tabela = None
     foto = None
 
-    if vinculo_id in [1, 2]:  # ou seja, aluno
+    if dados['vinculo_item'] in [1, 2]:  # ou seja, aluno
         tabela = 'V_ALU_FOTO'
     else:
         tabela = 'V_FUNC_FOTO'
 
-    result = api.get(tabela, {'MATRICULA': matricula})
-    if result.content[0]['foto'] is not None:
-        foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+    try:
+        result = api.get(tabela, {'MATRICULA': dados['matricula']})
+        if result.content[0]['foto'] is not None:
+            foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+    except:
+        # todo registrar essas ocorrencias de erro ao ler a foto
+        pass
 
     return foto
 
