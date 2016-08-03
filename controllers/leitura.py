@@ -1,33 +1,28 @@
 # -*- coding: utf-8 -*-
-__author__ = 'carlosfaruolo'
+from datetime import datetime
 
-from datetime import timedelta
+__author__ = 'carlosfaruolo'
 
 
 def index():
 
     form = FORM(T('Matricula'), INPUT(_name='matricula', requires=IS_NOT_EMPTY()), INPUT(_type='submit'))
-    descricao = None
     src_foto = URL("static", "images/silhueta.png")
+
+    refeicao_atual = busca_refeicao_atual()
+    descricao = None
 
     # aqui virao coisas do form
     if form.accepts(request, session):
+
+        descricao = busca_por_matricula(form.vars['matricula'])
+        foto = busca_foto_por_matricula(form.vars['matricula'], descricao['vinculo_item'])
+        if foto is not None:
+            src_foto = foto
+
+        registra_leitura(refeicao_atual['id'], form.vars['matricula'], descricao['descricao_vinculo'])
+
         response.flash = 'Lido'
-        try:
-            descricao = busca_por_matricula(form.vars['matricula'])
-
-            try:
-                foto = busca_foto_por_matricula(form.vars['matricula'], descricao['descricao_vinculo'])
-                if foto is not None:
-                    src_foto = foto
-                else:
-                    response.flash = 'Foto não disponível'
-
-            except:
-                response.flash = 'Erro ao consultar a foto'
-
-        except:
-            response.flash = 'Erro na consulta ao banco de dados'
 
     # aqui caso ocorreu xabu
     elif form.errors:
@@ -52,7 +47,7 @@ def busca_foto_por_matricula(matricula, vinculo_id):
     tabela = None
     foto = None
 
-    if vinculo_id is 1 or 2:  # ou seja, aluno
+    if vinculo_id in [1, 2]:  # ou seja, aluno
         tabela = 'V_ALU_FOTO'
     else:
         tabela = 'V_FUNC_FOTO'
@@ -67,9 +62,15 @@ def busca_foto_por_matricula(matricula, vinculo_id):
 def registra_leitura(refeicao, matricula, categoria):
     params = {
         'fk_refeicao': refeicao,
-        'fk_tipo_leitura': 1,
-        'timestamp': datetime(),
+        'fk_tipo_leitura': 1,  # log de apenas leitura
+        'timestamp': datetime.now(),
         'categoria': categoria,
         'matricula': matricula
     }
 
+    db.log_refeicoes.bulk_insert([params])
+
+
+def busca_refeicao_atual():
+    # codigo dummy
+    return db(db.refeicoes.id == 1).select()[0]
