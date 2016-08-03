@@ -76,5 +76,8 @@ def registra_leitura(refeicao, matricula, categoria):
 
 
 def busca_refeicao_atual():
-    # codigo dummy
+    # colocar logica da refeicao aqui
     return db(db.refeicoes.id == 1).select()[0]
+
+def busca_refeicoes_realizadas:
+    pass  # todo
