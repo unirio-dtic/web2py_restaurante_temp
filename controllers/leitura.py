@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
 __author__ = 'carlosfaruolo'
 
 
@@ -15,30 +17,22 @@ def index():
                 INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
                 INPUT(_type='submit'),
                 BR())
-    descricao = None
-    url_foto = URL("static", "images/silhueta.png")
+    src_foto = URL("static", "images/silhueta.png")
+
+    refeicao_atual = busca_refeicao_atual()
+    dados = None
 
     # aqui virao coisas do form
     if form.accepts(request, session):
+
+        dados = busca_dados_por_matricula(form.vars['matricula'])
+        foto = busca_foto(dados)
+        if foto is not None:
+            src_foto = foto
+
+        registra_leitura(refeicao_atual['id'], form.vars['matricula'], dados['descricao_vinculo'])
+
         response.flash = 'Lido'
-
-        matricula = form.vars['matricula']
-
-        try:
-            params = {'MATRICULA': matricula}
-            result = api.get('V_PESSOAS_DADOS', params)
-            descricao = result.content[0]
-
-            eh_aluno = (descricao['descricao_vinculo'] == 1 or descricao['descricao_vinculo'] == 2)
-
-            params = {'MATRICULA': matricula}
-            result = api.get('V_ALU_FOTO' if eh_aluno else 'V_FUNC_FOTO', params)
-            if result.content[0]['foto'] is not None:
-                url_foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
-
-        except:
-            response.flash = 'Erro na consulta ao banco de dados'
-            pass
 
     # aqui caso ocorreu xabu
     elif form.errors:
@@ -56,4 +50,51 @@ def index():
         botoes.append(TAG.button(row['descricao'], _type='button', _='disable'))
     form2 = SQLFORM.factory(db=None, buttons=botoes)
 
-    return dict(form=form, desc=descricao, foto=url_foto, refeicao=refeicao, dbug=texto, form2=form2)
+    return dict(form=form, desc=dados, src_foto=src_foto, refeicao=refeicao, dbug=texto, form2=form2)
+
+def busca_dados_por_matricula(matricula):
+
+    params = {'MATRICULA': matricula}
+    result = api.get('V_PESSOAS_DADOS', params)
+    return result.content[0]
+
+
+def busca_foto(dados):
+    tabela = None
+    foto = None
+
+    if dados['vinculo_item'] in [1, 2]:  # ou seja, aluno
+        tabela = 'V_ALU_FOTO'
+    else:
+        tabela = 'V_FUNC_FOTO'
+
+    try:
+        result = api.get(tabela, {'MATRICULA': dados['matricula']})
+        if result.content[0]['foto'] is not None:
+            foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+    except:
+        # todo registrar essas ocorrencias de erro ao ler a foto
+        pass
+
+    return foto
+
+
+def registra_leitura(refeicao, matricula, categoria):
+    params = {
+        'fk_refeicao': refeicao,
+        'fk_tipo_leitura': 1,  # log de apenas leitura
+        'timestamp': datetime.now(),
+        'categoria': categoria,
+        'matricula': matricula
+    }
+
+    db.log_refeicoes.bulk_insert([params])
+
+
+def busca_refeicao_atual():
+    # colocar logica da refeicao aqui
+    return db(db.refeicoes.id == 1).select()[0]
+
+
+def busca_refeicoes_realizadas():
+    pass  # todo
