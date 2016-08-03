@@ -102,7 +102,7 @@ auth.settings.reset_password_requires_verification = True
 #########################################################################
 
 
-
+# todo remover essa definicao de db (existe uma la em cima do codigo que pega essa url de myconf (appconfig.ini)
 db = DAL('postgres://postgres:devdtic2@teste.sistemas.unirio.br/restaurante', fake_migrate_all=True)
 
 db.define_table('refeicoes',
