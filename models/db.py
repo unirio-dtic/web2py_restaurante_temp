@@ -64,7 +64,7 @@ auth.settings.actions_disabled = [
 
 db.auth_user.username.label = 'CPF'
 
-from gluon.contrib.login_methods.ldap_auth import ldap_auth
+#from gluon.contrib.login_methods.ldap_auth import ldap_auth
 # auth.settings.login_methods = [ldap_auth(mode='uid', server=UNIRIOLDAP.LDAP_TESTE, base_dn='ou=people,dc=unirio,dc=br')]
 # auth.settings.login_onaccept.append(login_helper.adiciona_info_pessoa_logada)
 
@@ -101,6 +101,10 @@ auth.settings.reset_password_requires_verification = True
 ## >>> for row in rows: print row.id, row.myfield
 #########################################################################
 
+
+
+db = DAL('postgres://postgres:devdtic2@teste.sistemas.unirio.br/restaurante', fake_migrate_all=True)
+
 db.define_table('refeicoes',
                 Field('descricao', 'string', length=100, label='Descrição'),
                 Field('hr_inicio', 'time', label='Início'),
@@ -124,6 +128,7 @@ db.refeicoes.descricao.requires = IS_NOT_IN_DB(db, 'refeicoes.descricao')
 db.refeicoes.hr_inicio.requires = IS_TIME(error_message='Formato de hora: HH:MM')
 db.refeicoes.hr_fim.requires = IS_NOT_EMPTY()
 db.refeicoes.hr_fim.requires = IS_TIME(error_message='Formato de hora: HH:MM')
+db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = lambda value, row: DIV('R$ %.2f' % ('VAZIO' if value == None else value))
 #db.refeicoes.preco_total.requiquires = IS_? validador de moeda?
 # db.tipo_leitura.requires.descricao = IS_NOT_EMPTY()
 

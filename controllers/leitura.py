@@ -5,8 +5,18 @@ __author__ = 'carlosfaruolo'
 
 
 def index():
+    """Definindo valores de exibição"""
+    # definindo qual refeição está sendo servida
+    response.meta.time = request.now
+    refeicao = db(db.refeicoes.hr_fim >= response.meta.time).select()
 
-    form = FORM(T('Matricula'), INPUT(_name='matricula', requires=IS_NOT_EMPTY()), INPUT(_type='submit'))
+    response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
+    response.subtitle = 'Controle de refeições - ' + str(refeicao[0].descricao).upper()
+
+    form = FORM(T('Matrícula: '),
+                INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
+                INPUT(_type='submit'),
+                BR())
     src_foto = URL("static", "images/silhueta.png")
 
     refeicao_atual = busca_refeicao_atual()
@@ -30,11 +40,17 @@ def index():
 
     # mensagem ao entrar. podemos tirar isso tambem
     else:
-        response.flash = 'Insira a matricula'
+        response.flash = 'Insira a matrícula'
 
+    texto = ''
+    listar_botoes = []
+    botoes = []
+    for row in db(db.refeicoes.descricao != '').select():
+        texto += ' %s, ' % str(row['descricao'])
+        botoes.append(TAG.button(row['descricao'], _type='button', _='disable'))
+    form2 = SQLFORM.factory(db=None, buttons=botoes)
 
-    return dict(form=form, desc=dados, src_foto=src_foto)
-
+    return dict(form=form, desc=dados, src_foto=src_foto, refeicao=refeicao, dbug=texto, form2=form2)
 
 def busca_dados_por_matricula(matricula):
 
@@ -79,5 +95,6 @@ def busca_refeicao_atual():
     # colocar logica da refeicao aqui
     return db(db.refeicoes.id == 1).select()[0]
 
-def busca_refeicoes_realizadas:
+
+def busca_refeicoes_realizadas():
     pass  # todo

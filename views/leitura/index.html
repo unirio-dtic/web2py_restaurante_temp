@@ -1,8 +1,14 @@
 {{extend '_unirio/layout.html'}}
 
+<div align="center">
 {{=form}}
 <img src={{=src_foto}}>
 
 {{if desc:}}
         <div>{{=desc['nome']}}, {{=desc['matricula']}}, {{=desc['descricao_vinculo']}}</div>
 {{pass}}
+</div>
+<div>
+{{=form2}}
+</div>
+       <p>{{=dbug}}</p>
