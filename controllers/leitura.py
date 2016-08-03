@@ -8,7 +8,7 @@ def index():
     """Definindo valores de exibição"""
     # definindo qual refeição está sendo servida
     response.meta.time = request.now
-    refeicao = db(db.refeicoes.hr_fim >= response.meta.time).select()
+    refeicao = busca_refeicao_atual()
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
     response.subtitle = 'Controle de refeições - ' + str(refeicao[0].descricao).upper()
@@ -19,7 +19,6 @@ def index():
                 BR())
     src_foto = URL("static", "images/silhueta.png")
 
-    refeicao_atual = busca_refeicao_atual()
     dados = None
 
     # aqui virao coisas do form
@@ -30,7 +29,7 @@ def index():
         if foto is not None:
             src_foto = foto
 
-        registra_leitura(refeicao_atual['id'], form.vars['matricula'], dados['descricao_vinculo'])
+        registra_leitura(refeicao['id'], form.vars['matricula'], dados['descricao_vinculo'])
 
         response.flash = 'Lido'
 
@@ -92,8 +91,7 @@ def registra_leitura(refeicao, matricula, categoria):
 
 
 def busca_refeicao_atual():
-    # colocar logica da refeicao aqui
-    return db(db.refeicoes.id == 1).select()[0]
+    return db(db.refeicoes.hr_fim >= response.meta.time).select()
 
 
 def busca_refeicoes_realizadas():
