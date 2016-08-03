@@ -44,10 +44,10 @@ def index():
     horarios = []
     texto_debug = []
     for row in db(db.refeicoes.descricao != '').select():  # todo rever a condicao != ''
-        if row.id is refeicao.id:
-            horarios.append(SPAN(row.descricao + ' - Atual'))
+        if row.id == refeicao.id:
+            horarios.append(SPAN('[' + row.descricao + ' (atual)]'))
         else:
-            horarios.append(SPAN(row.descricao))
+            horarios.append(SPAN('[' + row.descricao + ']'))
         texto_debug.append(' %s, ' % str(row.descricao))  # debug
 
     form2 = FORM(
