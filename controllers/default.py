@@ -32,7 +32,7 @@ def ler_horario():
                            'preco_subsidiado': 'Preço Subsidiado'},
                    separator=': ', upload=URL('download'))
 
-    registros = db(db.refeicoes).select()
+    registros = SQLFORM.grid(db.refeicoes, deletable=True)  #db(db.refeicoes).select()
 
     if form.process().accepted:
         response.flash ='Cadastrado com sucesso!'

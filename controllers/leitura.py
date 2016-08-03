@@ -3,8 +3,18 @@ __author__ = 'carlosfaruolo'
 
 
 def index():
+    """Definindo valores de exibição"""
+    # definindo qual refeição está sendo servida
+    response.meta.time = request.now
+    refeicao = db(db.refeicoes.hr_fim >= response.meta.time).select()
 
-    form = FORM(T('Matricula'), INPUT(_name='matricula', requires=IS_NOT_EMPTY()), INPUT(_type='submit'))
+    response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
+    response.subtitle = 'Controle de refeições - ' + str(refeicao[0].descricao).upper()
+
+    form = FORM(T('Matrícula: '),
+                INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
+                INPUT(_type='submit'),
+                BR())
     descricao = None
     url_foto = URL("static", "images/silhueta.png")
 
@@ -36,7 +46,14 @@ def index():
 
     # mensagem ao entrar. podemos tirar isso tambem
     else:
-        response.flash = 'Insira a matricula'
+        response.flash = 'Insira a matrícula'
 
+    texto = ''
+    listar_botoes = []
+    botoes = []
+    for row in db(db.refeicoes.descricao != '').select():
+        texto += ' %s, ' % str(row['descricao'])
+        botoes.append(TAG.button(row['descricao'], _type='button', _='disable'))
+    form2 = SQLFORM.factory(db=None, buttons=botoes)
 
-    return dict(form=form, desc=descricao, foto=url_foto)
+    return dict(form=form, desc=descricao, foto=url_foto, refeicao=refeicao, dbug=texto, form2=form2)
