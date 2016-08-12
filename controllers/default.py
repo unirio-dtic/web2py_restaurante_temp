@@ -22,9 +22,13 @@ def index():
 
 
 def ler_horario():
+
     """registro dos horários das refeições"""
+
     # TODO: incluir política de nível de acesso
+
     response.subtitle = 'Nova refeição'
+
     # record = db.refeicoes(request.args(0)) or redirect(URL('ler_horario'))
     form = SQLFORM(db.refeicoes, submit_button='Salvar',
                    labels={'descricao': 'Descrição', 'hr_inicio':'Hora de Início',
@@ -47,15 +51,31 @@ def download():
 
 # TODO: definir leitura das codigos (conforme descrição)
 
-def ler_codigo():
-    """leitura dos codigos"""
+def ler_log_refeicoes():
 
-    form = ''
+    """Mostrar quantas refeições foram servidas no dia"""
+    response.title = 'RESTAURANTE UNIVERSITÁRIO'
+    response.subtitle = 'Relatório de registros'
+
+    form = SQLFORM.grid(db.log_refeicoes)
+    """for row in db(db.refeicoes.descricao != '').select():
+        form.append(db.refeicoes.descricao)"""
 
     return dict(form=form)
 
 
-# TODO: definir registro do log de refeicoes
+def ler_tipo_leitura():
+    """
+
+    Exibe: tipos de leitura
+
+    """
+    response.title = 'RESTAURANTE UNIVERSITÁRIO'
+    response.subtitle = 'Tipos de Leitura'
+
+    form = SQLFORM.grid(db.tipo_leitura)
+
+    return dict(form=form)
 
 
 

@@ -117,9 +117,9 @@ db.define_table('tipo_leitura',
                 Field('descricao', 'string', requires=IS_IN_SET(['Lido', 'Pagamento Total', 'Pagamento Subsidiado'])))
 
 db.define_table('log_refeicoes',
-                Field('fk_refeicao', 'reference refeicoes'),  # Chave estrangeira: id/refeicoes
-                Field('fk_tipo_leitura', 'reference tipo_leitura'),  # Chave estrangeira: id/tipo_leitura
-                Field('timestamp', 'datetime', default=request.now),
+                Field('fk_refeicao', 'reference refeicoes', label='Refeição'),  # Chave estrangeira: id/refeicoes
+                Field('fk_tipo_leitura', 'reference tipo_leitura', label='Operação'),  # Chave estrangeira: id/tipo_leitura
+                Field('timestamp', 'datetime', default=request.now, label='Hora do registro'),
                 Field('categoria', 'string', length=100),
                 Field('matricula', 'string', length=100))
 
@@ -128,8 +128,12 @@ db.refeicoes.descricao.requires = IS_NOT_IN_DB(db, 'refeicoes.descricao')
 db.refeicoes.hr_inicio.requires = IS_TIME(error_message='Formato de hora: HH:MM')
 db.refeicoes.hr_fim.requires = IS_NOT_EMPTY()
 db.refeicoes.hr_fim.requires = IS_TIME(error_message='Formato de hora: HH:MM')
-db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = lambda value, row: DIV('R$ %.2f' % ('VAZIO' if value == None else value))
-#db.refeicoes.preco_total.requiquires = IS_? validador de moeda?
+db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = \
+    lambda value, row: DIV('R$ %.2f' % (0 if value is None else value))
+
+db.log_refeicoes.fk_refeicao.represent = lambda value, row: db(db.refeicoes.id == value).select()[0].descricao # DIV('R$ %.2f' % ('VAZIO' if value is None else value))
+db.log_refeicoes.fk_tipo_leitura.represent = lambda value, row: db(db.tipo_leitura.id == value).select()[0].descricao
+# db.refeicoes.preco_total.requiquires = IS_? validador de moeda?
 # db.tipo_leitura.requires.descricao = IS_NOT_EMPTY()
 
 ## after defining tables, uncomment below to enable auditing

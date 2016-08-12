@@ -7,7 +7,7 @@
 {{if desc:}}
         <div>{{=desc['nome']}}, {{=desc['matricula']}}, {{=desc['descricao_vinculo']}}</div>
 {{else:}}
-        <div>--</div>
+        <div>{{response.flash}}</div>
 {{pass}}
 </div>
 
@@ -24,3 +24,7 @@
 <br><br><br>
 <h4>  DEBUG:  </h4>
 <p>{{=dbug}}</p>
+        <hr size="2"/>
+{{for c in contadores:}}
+        <spam style="color:#17759c; text-align-all: center;">{{=c}} = {{=contadores[c]}}</spam>
+        {{pass}}
