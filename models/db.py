@@ -131,9 +131,8 @@ db.refeicoes.hr_fim.requires = IS_TIME(error_message='Formato de hora: HH:MM')
 db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = \
     lambda value, row: DIV('R$ %.2f' % (0 if value is None else value))
 
-db.log_refeicoes.fk_refeicao.represent = lambda value, row: db(db.refeicoes.id == value).select()[0].descricao # DIV('R$ %.2f' % ('VAZIO' if value is None else value))
+db.log_refeicoes.fk_refeicao.represent = lambda value, row: db(db.refeicoes.id == value).select()[0].descricao
 db.log_refeicoes.fk_tipo_leitura.represent = lambda value, row: db(db.tipo_leitura.id == value).select()[0].descricao
-# db.refeicoes.preco_total.requiquires = IS_? validador de moeda?
 # db.tipo_leitura.requires.descricao = IS_NOT_EMPTY()
 
 ## after defining tables, uncomment below to enable auditing
