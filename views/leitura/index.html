@@ -2,10 +2,10 @@
 
 <div align="center">
 {{=form}}
-<img src={{=src_foto}}>
+<table><tr><td width="640px" height="360px" align="center" ><img src={{=src_foto}}></td></tr></table>
 
 {{if desc:}}
-        <div>{{=desc['nome']}}, {{=desc['matricula']}}, {{=desc['descricao_vinculo']}}</div>
+        <div>{{=desc['nome']}} <br> {{=desc['matricula']}} <br> {{=desc['descricao_vinculo']}}</div>
 {{else:}}
         <div>{{response.flash}}</div>
 {{pass}}
@@ -22,13 +22,15 @@
 {{=form2}}
 {{pass}}
 </div>
-
-<br><br><br>
-<h4>  DEBUG:  </h4>
-<p>{{=dbug}}</p>
-        <hr size="2"/><b>
-        <table width="100%"><tr>
+<br>
+<br>
+<br>
+<hr size="2"/><b>
+<table width="100%"><tr>
 {{for c in contadores:}}
-        <td style="width: 33%; text-align: center" >{{=c}} = {{=contadores[c]}}</td>
+        <td style="width: 33%; text-align: center" >{{=c}} = {{=(contadores[c]-1)}}</td>
         {{pass}}
 </tr></table></b>
+
+<h4>  DEBUG:  </h4>
+<p>{{=dbug}}</p>

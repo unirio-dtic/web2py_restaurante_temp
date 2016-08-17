@@ -24,7 +24,7 @@ def index():
 
     form2 = FORM(
         INPUT(_name='ret_matricula', _type='text', _value=''),
-        INPUT(_name='ret_reficao_id', _type='text', _value=str(refeicao.id)),
+        INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id)),
         INPUT(_name='ret_descricao_vinculo', _type='text', _value=''),
         BR(),
         INPUT(_name='but_pag_total', _type='button',
@@ -46,8 +46,7 @@ def index():
         foto = busca_foto(dados)
         if foto is not None:
             src_foto = foto
-        # l = [str(refeicao.id), str(form.vars['matricula']), dados['descricao_vinculo'].encode('utf-8')]
-        # registra_leitura(l[0], l[1], l[2])
+
         caixas = form2.elements('input', _type='text')
         for c in caixas:
             if c['_name'] == 'ret_matricula':
@@ -59,25 +58,25 @@ def index():
         registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
 
         # adicionar função do botões (dependente de haver dados)
-        # click_action = 'ajax(\'registra_compra_total\',[ %s, \'%s\', \'%s\'], \'target\')' % (l[0], l[1], l[2])
 
-        click_action = 'ajax(\'leitura/registra_compra_total\',[\'ret_matricula\', ], \'\')'
-        form2.element('input', _type='button', _name='but_pag_subs')['_onclick'] = click_action
-        """
-                    _onclick="ajax('registra_compra_total', [" + str(refeicao.id) + ", "
-                                   + str(form.vars['matricula']) + ", "
-                                   + str(dados['descricao_vinculo']) + "], 'target')"
-                    """
+        click_action_total = "ajax('leitura/registra_compra_total',['ret_refeicao_id', 'ret_matricula', " \
+                             "'ret_descricao_vinculo'], '')"
+        click_action_sub = "ajax('leitura/registra_compra_subsi',['ret_refeicao_id', 'ret_matricula', " \
+                             "'ret_descricao_vinculo'], '')"
+        form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_total
+        form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_sub
 
         texto_debug.append(str(foto))
-
 
     # caso não seja aluno ocultar opção de pagamento subsidiado
 
         if not eh_aluno(dados) or refeicao.id == 1:
-            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'display:none'
+            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
+        elif dados['matricula'] in busca_refeicoes_realizadas(dados['matricula']):
+            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
+            form2.element('input', _type='button', _name='but_pag_total')['_style'] = 'visibility:hidden'
         else:
-            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'display:auto'
+            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:visible'
 
         response.flash = 'Lido'
 
@@ -94,21 +93,22 @@ def index():
 
     for row in db(db.refeicoes.descricao != '').select():  # TODO rever a condicao != ''
         if row.id == refeicao.id:
-            # horarios.append(SPAN('[' + row.descricao + ' (atual)]'))
-            horarios.append(IMG(_src=URL("static", "images/caixa2.png")))
+            horarios.append(IMG(_src=URL("static", "images/caixa1.png"), _name='img_' + str(row.descricao),
+                                _style="border: 2px solid black;"))
             horarios.append(SPAN(str(row.descricao), _name='caption', _style='position: absolute; margin-top: 40px; '
                                                                              'margin-left: -130px; color: white;'))
         else:
-            horarios.append(IMG(_src=URL("static", "images/caixa1.png")))
+            horarios.append(IMG(_src=URL("static", "images/caixa1.png"), _name='img_' + str(row.descricao)))
             horarios.append(SPAN(str(row.descricao), _name='caption', _style='position: absolute; margin-top: 40px; '
                                                                              'margin-left: -130px; color: white; '))
         texto_debug.append(' %s, ' % row.descricao)  # debug
 
 
     contadores = {}
+    # TODO: contador sempre retorna 1 a mais - descobrir motivo
     for row in db(db.refeicoes).select():
         if row is not None:
-            contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id and db.log_refeicoes.fk_tipo_leitura != 1).count()
+            contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id).count(db.log_refeicoes.fk_tipo_leitura != 1)
 
     return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
                 form2=form2, horarios=horarios, dbug=texto_debug, contadores=contadores)
@@ -154,7 +154,7 @@ def eh_aluno(dados):
     """
 
     is_aluno = False
-    if dados['vinculo_item'] in [1, 2]:  # ou seja, aluno
+    if dados['vinculo_item'] == 1:  # ou seja, aluno
         is_aluno = True
     else:
         is_aluno = False
@@ -181,24 +181,14 @@ def registra_compra_total():
 
     """
     params = {
-        'fk_refeicao': '',
+        'fk_refeicao': request.vars['ret_refeicao_id'],
         'fk_tipo_leitura': 2,  # log de compra total
         'timestamp': datetime.now(),
-        'categoria': '',
-        'matricula': '' # form2.vars['ret_matricula']
+        'categoria': request.vars['ret_descricao_vinculo'],
+        'matricula': request.vars['ret_matricula']
     }
 
     db.log_refeicoes.bulk_insert([params])
-
-    # params = {
-    #     'fk_refeicao': refeicao,
-    #     'fk_tipo_leitura': 2,  # log de compra total
-    #     'timestamp': datetime.now(),
-    #     'categoria': categoria,
-    #     'matricula': matricula
-    # }
-    #
-    # db.log_refeicoes.bulk_insert([params])
 
 
 def registra_compra_subsi(refeicao, matricula, categoria):
@@ -209,11 +199,11 @@ def registra_compra_subsi(refeicao, matricula, categoria):
     """
 
     params = {
-        'fk_refeicao': refeicao,
+        'fk_refeicao': request.vars['ret_refeicao_id'],
         'fk_tipo_leitura': 3,  # log de compra subsidiada
         'timestamp': datetime.now(),
-        'categoria': categoria,
-        'matricula': matricula
+        'categoria': request.vars['ret_descricao_vinculo'],
+        'matricula': request.vars['ret_matricula']
     }
 
     db.log_refeicoes.bulk_insert([params])
@@ -229,5 +219,12 @@ def busca_refeicao_atual():
     return db(db.refeicoes.hr_fim >= response.meta.time).select()[0]
 
 
-def busca_refeicoes_realizadas():
-    pass  # todo
+def busca_refeicoes_realizadas(matricula):
+    """
+
+    Retorna refeicoes realizadas por um determinada matrícula NO DIA:
+
+    """
+    return db(db.log_refeicoes.matricula == matricula and
+              db.log_refeicoes.timestamp.date == datetime.today() and
+              db.log_refeicoes.fk_tipo_leitura != 1).select()

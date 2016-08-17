@@ -78,6 +78,19 @@ def ler_tipo_leitura():
     return dict(form=form)
 
 
+def ler_refeicoes():
+    """
+
+    Exibe: refeições Cadastradas
+
+    """
+    response.title = 'RESTAURANTE UNIVERSITÁRIO'
+    response.subtitle = 'Refeições cadastradas'
+
+    form = SQLFORM.smartgrid(db.refeicoes)
+
+    return dict(form=form)
+
 
 def user():
     """
