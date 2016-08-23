@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from unirio.api.exceptions import NoContentException
 
 __author__ = 'carlosfaruolo'
 
@@ -62,7 +63,7 @@ def index():
         click_action_total = "ajax('leitura/registra_compra_total',['ret_refeicao_id', 'ret_matricula', " \
                              "'ret_descricao_vinculo'], '')"
         click_action_sub = "ajax('leitura/registra_compra_subsi',['ret_refeicao_id', 'ret_matricula', " \
-                             "'ret_descricao_vinculo'], '')"
+                           "'ret_descricao_vinculo'], '')"
         form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_total
         form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_sub
 
@@ -134,10 +135,11 @@ def busca_foto(dados):
         result = api.get(tabela, {'MATRICULA': dados['matricula']})
         if result.content[0]['foto'] is not None:
             foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
+    except NoContentException:
+        pass  # normal isso ocorrer, nem todos possuem foto
     except:
         # TODO registrar essas ocorrencias de erro ao ler a foto
         pass
-
     return foto
 
 
