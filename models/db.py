@@ -101,6 +101,11 @@ auth.settings.reset_password_requires_verification = True
 ## >>> for row in rows: print row.id, row.myfield
 #########################################################################
 
+ID_TIPO_ALUNO_GRADUACAO = 1
+
+ID_TIPO_LEITURA_LEITURA_DE_MATRICULA = 1
+ID_TIPO_LEITURA_PAGAMENTO_TOTAL = 2
+ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO = 3
 
 # todo remover essa definicao de db (existe uma la em cima do codigo que pega essa url de myconf (appconfig.ini)
 db = DAL('postgres://postgres:devdtic2@teste.sistemas.unirio.br/restaurante', fake_migrate_all=True)

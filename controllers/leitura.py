@@ -24,7 +24,6 @@ def index():
     src_foto = URL("static", "images/nova_silhueta.png")
 
     form2 = None
-
     dados = None
 
     pagamento_realizado = request.vars['pagamento_realizado']
@@ -40,6 +39,13 @@ def index():
 
         if dados is not None:
             registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
+            refeicoes_realizadas = busca_refeicoes_realizadas(dados['matricula'])
+
+            ja_fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO not in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
+
+            subsidio_permitido = (dados['vinculo_item'] == ID_TIPO_ALUNO_GRADUACAO
+                                  and refeicao.id != 1  # TODO tem que se verificar o 'tipo' de refeição, e não o id dela. Cabe uma analise de uma columa ou uma tabela a mais no modelo.
+                                  and ja_fez_refeicao_subsidiada)
 
             form2 = FORM(
                 INPUT(_name='ret_matricula', _type='text', _value=dados['matricula'], _style='visibility:hidden'),
@@ -53,7 +59,7 @@ def index():
                       _value=T("Pagamento subsidiado: R$ ") + str(refeicao.preco_subsidiado).replace('.', ','),
                       _onclick="ajax('registra_compra_subs',['ret_refeicao_id', 'ret_matricula', 'ret_descricao_vinculo'], '')",
                       # ocultar opção de pagamento subsidiado caso não seja aluno graduação ou a refeição é café da manhã.
-                      _style='visibility:hidden' if dados['vinculo_item'] != 1 or refeicao.id == 1 else 'visibility:visible'),)
+                      _style='visibility:visible' if subsidio_permitido else 'visibility:hidden'),)
 
             foto = busca_foto(dados)
             if foto is not None:
@@ -116,13 +122,11 @@ def busca_foto(dados):
         tabela = 'V_FUNC_FOTO'
 
     try:
-        result = api.get(tabela, {'MATRICULA': dados['matricula']})
-        if result.content[0]['foto'] is not None:
-            foto = 'data:image/jpeg;base64,' + result.content[0]['foto']
-    except NoContentException:
-        pass  # normal isso ocorrer, nem todos possuem foto
-    except:
-        # TODO registrar essas ocorrencias de erro ao ler a foto
+        result = api.get_single_result(tabela, {'MATRICULA': dados['matricula']}, bypass_no_content_exception=True)
+        if result.content['foto'] is not None:
+            foto = 'data:image/jpeg;base64,' + result.content['foto']
+    except AttributeError:
+        # Caso de matricula invalida, result == None
         pass
     return foto
 
@@ -130,7 +134,7 @@ def busca_foto(dados):
 def registra_leitura(refeicao, matricula, categoria):
     params = {
         'fk_refeicao': refeicao,
-        'fk_tipo_leitura': 1,  # log de apenas leitura
+        'fk_tipo_leitura': ID_TIPO_LEITURA_LEITURA_DE_MATRICULA,
         'timestamp': datetime.now(),
         'categoria': categoria,
         'matricula': matricula
@@ -147,7 +151,7 @@ def registra_compra_total():
     """
     params = {
         'fk_refeicao': request.vars['ret_refeicao_id'],
-        'fk_tipo_leitura': 2,  # log de compra total
+        'fk_tipo_leitura': ID_TIPO_LEITURA_PAGAMENTO_TOTAL,
         'timestamp': datetime.now(),
         'categoria': request.vars['ret_descricao_vinculo'],
         'matricula': request.vars['ret_matricula']
@@ -166,7 +170,7 @@ def registra_compra_subs():
 
     params = {
         'fk_refeicao': request.vars['ret_refeicao_id'],
-        'fk_tipo_leitura': 3,  # log de compra subsidiada
+        'fk_tipo_leitura': ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO,
         'timestamp': datetime.now(),
         'categoria': request.vars['ret_descricao_vinculo'],
         'matricula': request.vars['ret_matricula']
