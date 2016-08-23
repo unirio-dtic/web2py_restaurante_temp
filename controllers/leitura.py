@@ -23,24 +23,12 @@ def index():
                 BR())
     src_foto = URL("static", "images/nova_silhueta.png")
 
-    form2 = FORM(
-        INPUT(_name='ret_matricula', _type='text', _value=''),
-        INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id)),
-        INPUT(_name='ret_descricao_vinculo', _type='text', _value=''),
-        BR(),
-        INPUT(_name='but_pag_total', _type='button',
-              _value=T("Pagamento total: R$ ") + str(refeicao.preco_total).replace('.', ',')),
-        INPUT(_name='but_pag_subs', _type='button',
-              _value=T("Pagamento subsidiado: R$ ") + str(refeicao.preco_subsidiado).replace('.', ',')))
-    """
-            _onclick="ajax('registra_compra_total', [" + str(refeicao.id) + ", "
-                           + str(form.vars['matricula']) + ", "
-                           + str(dados['descricao_vinculo']) + "], 'target')"
-            """
+    form2 = None
+
     dados = None
     texto_debug = []
 
-    # aqui virao coisas do form
+    # aqui virao coisas do form da matricula
     if form.accepts(request, session):
         dados = None
         try:
@@ -49,45 +37,29 @@ def index():
             dados = None
 
         if dados is not None:
+            registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
+
+            form2 = FORM(
+                INPUT(_name='ret_matricula', _type='text', _value=dados['matricula']),
+                INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id)),
+                INPUT(_name='ret_descricao_vinculo', _type='text', _value=dados['descricao_vinculo'].encode('utf-8')),
+                BR(),
+                INPUT(_name='but_pag_total', _type='button',
+                      _value=T("Pagamento total: R$ ") + str(refeicao.preco_total).replace('.', ','),
+                      _onclick="ajax('registra_compra_total',['ret_refeicao_id', 'ret_matricula', 'ret_descricao_vinculo'], '')"),
+                INPUT(_name='but_pag_subs', _type='button',
+                      _value=T("Pagamento subsidiado: R$ ") + str(refeicao.preco_subsidiado).replace('.', ','),
+                      _onclick="ajax('registra_compra_subs',['ret_refeicao_id', 'ret_matricula', 'ret_descricao_vinculo'], '')",
+                      # ocultar opção de pagamento subsidiado caso não seja aluno graduação ou a refeição é café da manhã.
+                      _style='visibility:hidden' if dados['vinculo_item'] != 1 or refeicao.id == 1 else 'visibility:visible'),)
+
             foto = busca_foto(dados)
             if foto is not None:
                 src_foto = foto
 
-            caixas = form2.elements('input', _type='text')
-            for c in caixas:
-                if c['_name'] == 'ret_matricula':
-                    c['_value'] = str(dados['matricula'])
-                if c['_name'] == 'ret_descricao_vinculo':
-                    c['_value'] = dados['descricao_vinculo']
-                c['_readonly'] = 'readonly'
-
-            registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
-
-            # adicionar função do botões (dependente de haver dados)
-
-            click_action_total = "ajax('leitura/registra_compra_total',['ret_refeicao_id', 'ret_matricula', " \
-                                 "'ret_descricao_vinculo'], '')"
-            click_action_sub = "ajax('leitura/registra_compra_subsi',['ret_refeicao_id', 'ret_matricula', " \
-                               "'ret_descricao_vinculo'], '')"
-            form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_total
-            form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_sub
-
-            texto_debug.append(str(foto))
-
-            # caso não seja aluno ocultar opção de pagamento subsidiado
-
-            if not eh_aluno(dados) or refeicao.id == 1:
-                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
-            elif dados['matricula'] in [i['matricula'] for i in busca_refeicoes_realizadas(dados['matricula'])]:
-                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
-                form2.element('input', _type='button', _name='but_pag_total')['_style'] = 'visibility:hidden'
-            else:
-                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:visible'
-
             response.flash = 'Lido'
         else:
             response.flash = 'Matricula inexistente ou ausente do banco de dados.'
-            form2 = ''
 
     # aqui caso ocorreu xabu
     elif form.errors:
@@ -96,6 +68,10 @@ def index():
     # mensagem ao entrar. podemos tirar isso tambem
     else:
         response.flash = 'Insira a matrícula'
+
+    # if form2 and form2.accepts(request, session):
+    #     response.flash = 'foi'
+    #     pass
 
     horarios = []
 
@@ -150,27 +126,6 @@ def busca_foto(dados):
     return foto
 
 
-def eh_aluno(dados):
-
-    """
-    Retorna Verdadeiro ou Falso para uma lista de 'dados', a saber:
-
-    dados:
-        código da refeição (chave);
-        Matrícula do aluno/servidor;
-        descrição do Vinculo do aluno/servidor
-
-    """
-
-    is_aluno = False
-    if dados['vinculo_item'] == 1:  # ou seja, aluno
-        is_aluno = True
-    else:
-        is_aluno = False
-
-    return is_aluno
-
-
 def registra_leitura(refeicao, matricula, categoria):
     params = {
         'fk_refeicao': refeicao,
@@ -198,9 +153,10 @@ def registra_compra_total():
     }
 
     db.log_refeicoes.bulk_insert([params])
+    return 'Pagamento realizado!'
 
 
-def registra_compra_subsi(refeicao, matricula, categoria):
+def registra_compra_subs():
 
     """
     Registra as compras com valor subsisdiado
@@ -216,6 +172,7 @@ def registra_compra_subsi(refeicao, matricula, categoria):
     }
 
     db.log_refeicoes.bulk_insert([params])
+    return 'Pagamento subsidiado realizado!'
 
 
 def busca_refeicao_atual():
