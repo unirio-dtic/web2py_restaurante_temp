@@ -13,9 +13,11 @@ def index():
     # definindo qual refeição está sendo servida
     response.meta.time = request.now
     refeicao = _busca_refeicao_atual()
+    if not refeicao:
+        redirect(URL('default', 'index'))  # TODO fazer uma pagina dizendo que nao possuem refeicoes no horario atual
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
-    response.subtitle = 'Controle de refeições - ' + str(refeicao.descricao)
+    response.subtitle = 'Controle de refeições - ' + refeicao.descricao
 
     form = FORM(T('Matrícula: '),
                 INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
@@ -25,6 +27,7 @@ def index():
 
     form2 = None
     dados = None
+    refeicoes_realizadas = None
 
     pagamento_realizado = request.vars['pagamento_realizado']
 
@@ -83,16 +86,11 @@ def index():
 
     horarios = []
 
-    for row in db(db.refeicoes.descricao != '').select():  # TODO rever a condicao != ''
-        if row.id == refeicao.id:
-            horarios.append(IMG(_src=URL("static", "images/caixa1.png"), _name='img_' + str(row.descricao),
-                                _style="border: 2px solid black;"))
-            horarios.append(SPAN(str(row.descricao), _name='caption', _style='position: absolute; margin-top: 40px; '
-                                                                             'margin-left: -130px; color: white;'))
-        else:
-            horarios.append(IMG(_src=URL("static", "images/caixa1.png"), _name='img_' + str(row.descricao)))
-            horarios.append(SPAN(str(row.descricao), _name='caption', _style='position: absolute; margin-top: 40px; '
-                                                                             'margin-left: -130px; color: white; '))
+    for row in db(db.refeicoes).select():
+        horarios.append(IMG(_src=URL("static", "images/caixa2.png" if refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa1.png"),
+                            _name='img_' + str(row.descricao), _style="border: 2px solid black;" if row.id == refeicao.id else None))
+        horarios.append(SPAN(str(row.descricao), _name='caption',
+                             _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
 
     contadores = {}
     # TODO: contador sempre retorna 1 a mais - descobrir motivo
@@ -103,6 +101,13 @@ def index():
     return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
                 form2=form2, horarios=horarios, contadores=contadores,
                 pagamento_realizado=pagamento_realizado)
+
+
+def refeicao_ja_realizada(refeicoes_realizadas, row):
+    if not refeicoes_realizadas:
+        return False
+
+    return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
 
 
 def _busca_dados_por_matricula(matricula):
@@ -187,7 +192,8 @@ def _busca_refeicao_atual():
 
     """
 
-    return db(db.refeicoes.hr_fim >= response.meta.time).select()[0]
+    return db((db.refeicoes.hr_fim >= response.meta.time) &
+              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
 
 def _busca_refeicoes_realizadas(matricula):
@@ -198,4 +204,6 @@ def _busca_refeicoes_realizadas(matricula):
     """
     return db(db.log_refeicoes.matricula == matricula and
               db.log_refeicoes.timestamp == datetime.today() and
-              db.log_refeicoes.fk_tipo_leitura != 1).select()
+              db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA).select()
+
+
