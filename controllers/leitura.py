@@ -42,44 +42,52 @@ def index():
 
     # aqui virao coisas do form
     if form.accepts(request, session):
+        dados = None
+        try:
+            dados = busca_dados_por_matricula(form.vars['matricula'])
+        except NoContentException:
+            dados = None
 
-        dados = busca_dados_por_matricula(form.vars['matricula'])
-        foto = busca_foto(dados)
-        if foto is not None:
-            src_foto = foto
+        if dados is not None:
+            foto = busca_foto(dados)
+            if foto is not None:
+                src_foto = foto
 
-        caixas = form2.elements('input', _type='text')
-        for c in caixas:
-            if c['_name'] == 'ret_matricula':
-                c['_value'] = str(dados['matricula'])
-            if c['_name'] == 'ret_descricao_vinculo':
-                c['_value'] = dados['descricao_vinculo']
-            c['_readonly'] = 'readonly'
+            caixas = form2.elements('input', _type='text')
+            for c in caixas:
+                if c['_name'] == 'ret_matricula':
+                    c['_value'] = str(dados['matricula'])
+                if c['_name'] == 'ret_descricao_vinculo':
+                    c['_value'] = dados['descricao_vinculo']
+                c['_readonly'] = 'readonly'
 
-        registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
+            registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
 
-        # adicionar função do botões (dependente de haver dados)
+            # adicionar função do botões (dependente de haver dados)
 
-        click_action_total = "ajax('leitura/registra_compra_total',['ret_refeicao_id', 'ret_matricula', " \
-                             "'ret_descricao_vinculo'], '')"
-        click_action_sub = "ajax('leitura/registra_compra_subsi',['ret_refeicao_id', 'ret_matricula', " \
-                           "'ret_descricao_vinculo'], '')"
-        form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_total
-        form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_sub
+            click_action_total = "ajax('leitura/registra_compra_total',['ret_refeicao_id', 'ret_matricula', " \
+                                 "'ret_descricao_vinculo'], '')"
+            click_action_sub = "ajax('leitura/registra_compra_subsi',['ret_refeicao_id', 'ret_matricula', " \
+                               "'ret_descricao_vinculo'], '')"
+            form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_total
+            form2.element('input', _type='button', _name='but_pag_total')['_onclick'] = click_action_sub
 
-        texto_debug.append(str(foto))
+            texto_debug.append(str(foto))
 
-    # caso não seja aluno ocultar opção de pagamento subsidiado
+            # caso não seja aluno ocultar opção de pagamento subsidiado
 
-        if not eh_aluno(dados) or refeicao.id == 1:
-            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
-        elif dados['matricula'] in [i['matricula'] for i in busca_refeicoes_realizadas(dados['matricula'])]:
-            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
-            form2.element('input', _type='button', _name='but_pag_total')['_style'] = 'visibility:hidden'
+            if not eh_aluno(dados) or refeicao.id == 1:
+                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
+            elif dados['matricula'] in [i['matricula'] for i in busca_refeicoes_realizadas(dados['matricula'])]:
+                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
+                form2.element('input', _type='button', _name='but_pag_total')['_style'] = 'visibility:hidden'
+            else:
+                form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:visible'
+
+            response.flash = 'Lido'
         else:
-            form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:visible'
-
-        response.flash = 'Lido'
+            response.flash = 'Matricula inexistente ou ausente do banco de dados.'
+            form2 = ''
 
     # aqui caso ocorreu xabu
     elif form.errors:
@@ -88,7 +96,6 @@ def index():
     # mensagem ao entrar. podemos tirar isso tambem
     else:
         response.flash = 'Insira a matrícula'
-
 
     horarios = []
 
