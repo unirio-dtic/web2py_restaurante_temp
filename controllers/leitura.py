@@ -73,7 +73,7 @@ def index():
 
         if not eh_aluno(dados) or refeicao.id == 1:
             form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
-        elif dados['matricula'] in busca_refeicoes_realizadas(dados['matricula']):
+        elif dados['matricula'] in [i['matricula'] for i in busca_refeicoes_realizadas(dados['matricula'])]:
             form2.element('input', _type='button', _name='but_pag_subs')['_style'] = 'visibility:hidden'
             form2.element('input', _type='button', _name='but_pag_total')['_style'] = 'visibility:hidden'
         else:
@@ -228,5 +228,5 @@ def busca_refeicoes_realizadas(matricula):
 
     """
     return db(db.log_refeicoes.matricula == matricula and
-              db.log_refeicoes.timestamp.date == datetime.today() and
+              db.log_refeicoes.timestamp == datetime.today() and
               db.log_refeicoes.fk_tipo_leitura != 1).select()
