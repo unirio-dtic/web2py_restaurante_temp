@@ -12,7 +12,7 @@ def index():
     """
     # definindo qual refeição está sendo servida
     response.meta.time = request.now
-    refeicao = busca_refeicao_atual()
+    refeicao = _busca_refeicao_atual()
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
     response.subtitle = 'Controle de refeições - ' + str(refeicao.descricao)
@@ -33,13 +33,13 @@ def index():
         pagamento_realizado = None
         dados = None
         try:
-            dados = busca_dados_por_matricula(form.vars['matricula'])
+            dados = _busca_dados_por_matricula(form.vars['matricula'])
         except NoContentException:
             dados = None
 
         if dados is not None:
-            registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
-            refeicoes_realizadas = busca_refeicoes_realizadas(dados['matricula'])
+            _registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
+            refeicoes_realizadas = _busca_refeicoes_realizadas(dados['matricula'])
 
             ja_fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO not in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
 
@@ -61,7 +61,7 @@ def index():
                       # ocultar opção de pagamento subsidiado caso não seja aluno graduação ou a refeição é café da manhã.
                       _style='visibility:visible' if subsidio_permitido else 'visibility:hidden'),)
 
-            foto = busca_foto(dados)
+            foto = _busca_foto(dados)
             if foto is not None:
                 src_foto = foto
 
@@ -105,14 +105,14 @@ def index():
                 pagamento_realizado=pagamento_realizado)
 
 
-def busca_dados_por_matricula(matricula):
+def _busca_dados_por_matricula(matricula):
 
     params = {'MATRICULA': matricula}
     result = api.get('V_PESSOAS_DADOS', params)
     return result.content[0]
 
 
-def busca_foto(dados):
+def _busca_foto(dados):
     tabela = None
     foto = None
 
@@ -131,7 +131,7 @@ def busca_foto(dados):
     return foto
 
 
-def registra_leitura(refeicao, matricula, categoria):
+def _registra_leitura(refeicao, matricula, categoria):
     params = {
         'fk_refeicao': refeicao,
         'fk_tipo_leitura': ID_TIPO_LEITURA_LEITURA_DE_MATRICULA,
@@ -180,7 +180,7 @@ def registra_compra_subs():
     redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
 
-def busca_refeicao_atual():
+def _busca_refeicao_atual():
 
     """
     Compara como horário e retorna a refeição atual
@@ -190,7 +190,7 @@ def busca_refeicao_atual():
     return db(db.refeicoes.hr_fim >= response.meta.time).select()[0]
 
 
-def busca_refeicoes_realizadas(matricula):
+def _busca_refeicoes_realizadas(matricula):
     """
 
     Retorna refeicoes realizadas por um determinada matrícula NO DIA:
