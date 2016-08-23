@@ -17,9 +17,18 @@
     {{pass}}
 </div>
 
-<div id="target" align="center">
-    {{=form2}}
-</div>
+{{if form2:}}
+    <div align="center">
+        {{=form2}}
+    </div>
+{{pass}}
+
+{{if pagamento_realizado:}}
+    <div align="center">
+        <h3>Pagamento realizado!</h3>
+    </div>
+{{pass}}
+
 <br>
 <br>
 <br>
@@ -31,6 +40,3 @@
         {{pass}}
     </tr>
 </table>
-
-<h4>  DEBUG:  </h4>
-<p>{{=dbug}}</p>

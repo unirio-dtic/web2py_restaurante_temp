@@ -26,10 +26,12 @@ def index():
     form2 = None
 
     dados = None
-    texto_debug = []
+
+    pagamento_realizado = request.vars['pagamento_realizado']
 
     # aqui virao coisas do form da matricula
     if form.accepts(request, session):
+        pagamento_realizado = None
         dados = None
         try:
             dados = busca_dados_por_matricula(form.vars['matricula'])
@@ -40,9 +42,9 @@ def index():
             registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
 
             form2 = FORM(
-                INPUT(_name='ret_matricula', _type='text', _value=dados['matricula']),
-                INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id)),
-                INPUT(_name='ret_descricao_vinculo', _type='text', _value=dados['descricao_vinculo'].encode('utf-8')),
+                INPUT(_name='ret_matricula', _type='text', _value=dados['matricula'], _style='visibility:hidden'),
+                INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id), _style='visibility:hidden'),
+                INPUT(_name='ret_descricao_vinculo', _type='text', _value=dados['descricao_vinculo'].encode('utf-8'), _style='visibility:hidden'),
                 BR(),
                 INPUT(_name='but_pag_total', _type='button',
                       _value=T("Pagamento total: R$ ") + str(refeicao.preco_total).replace('.', ','),
@@ -85,8 +87,6 @@ def index():
             horarios.append(IMG(_src=URL("static", "images/caixa1.png"), _name='img_' + str(row.descricao)))
             horarios.append(SPAN(str(row.descricao), _name='caption', _style='position: absolute; margin-top: 40px; '
                                                                              'margin-left: -130px; color: white; '))
-        texto_debug.append(' %s, ' % row.descricao)  # debug
-
 
     contadores = {}
     # TODO: contador sempre retorna 1 a mais - descobrir motivo
@@ -95,7 +95,8 @@ def index():
             contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id).count(db.log_refeicoes.fk_tipo_leitura != 1)
 
     return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
-                form2=form2, horarios=horarios, dbug=texto_debug, contadores=contadores)
+                form2=form2, horarios=horarios, contadores=contadores,
+                pagamento_realizado=pagamento_realizado)
 
 
 def busca_dados_por_matricula(matricula):
@@ -153,7 +154,7 @@ def registra_compra_total():
     }
 
     db.log_refeicoes.bulk_insert([params])
-    return 'Pagamento realizado!'
+    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
 
 def registra_compra_subs():
@@ -172,7 +173,7 @@ def registra_compra_subs():
     }
 
     db.log_refeicoes.bulk_insert([params])
-    return 'Pagamento subsidiado realizado!'
+    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
 
 def busca_refeicao_atual():
