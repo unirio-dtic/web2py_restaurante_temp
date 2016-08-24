@@ -87,7 +87,7 @@ def index():
     horarios = []
 
     for row in db(db.refeicoes).select():
-        horarios.append(IMG(_src=URL("static", "images/caixa_vermelha.png" if refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa_azul.png"),
+        horarios.append(IMG(_src=URL("static", "images/caixa_vermelha.png" if _refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa_azul.png"),
                             _name='img_' + str(row.descricao), _style="border: 2px solid black;" if row.id == refeicao.id else None))
         horarios.append(SPAN(str(row.descricao), _name='caption',
                              _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
@@ -115,11 +115,22 @@ def preparando_refeicao():
     return dict(form=form)
 
 
-def refeicao_ja_realizada(refeicoes_realizadas, row):
-    if not refeicoes_realizadas:
-        return False
+def registra_compra_total():
+    _registra_log_refeicoes(request.vars['ret_refeicao_id'], request.vars['ret_matricula'], request.vars['ret_descricao_vinculo'], ID_TIPO_LEITURA_PAGAMENTO_TOTAL)
+    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
-    return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
+
+def registra_compra_subs():
+    _registra_log_refeicoes(request.vars['ret_refeicao_id'], request.vars['ret_matricula'], request.vars['ret_descricao_vinculo'], ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO)
+    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
+
+
+def _registra_leitura(refeicao, matricula, categoria):
+    """
+    Registra a leitura da matricula
+
+    """
+    _registra_log_refeicoes(refeicao, matricula, categoria, ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
 
 
 def _busca_dados_por_matricula(matricula):
@@ -148,59 +159,11 @@ def _busca_foto(dados):
     return foto
 
 
-def _registra_leitura(refeicao, matricula, categoria):
-    params = {
-        'fk_refeicao': refeicao,
-        'fk_tipo_leitura': ID_TIPO_LEITURA_LEITURA_DE_MATRICULA,
-        'timestamp': datetime.now(),
-        'categoria': categoria,
-        'matricula': matricula
-    }
-
-    db.log_refeicoes.bulk_insert([params])
-
-
-def registra_compra_total():
-
-    """
-    Registra as compras com valor total
-
-    """
-    params = {
-        'fk_refeicao': request.vars['ret_refeicao_id'],
-        'fk_tipo_leitura': ID_TIPO_LEITURA_PAGAMENTO_TOTAL,
-        'timestamp': datetime.now(),
-        'categoria': request.vars['ret_descricao_vinculo'],
-        'matricula': request.vars['ret_matricula']
-    }
-
-    db.log_refeicoes.bulk_insert([params])
-    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
-
-
-def registra_compra_subs():
-
-    """
-    Registra as compras com valor subsisdiado
-
-    """
-
-    params = {
-        'fk_refeicao': request.vars['ret_refeicao_id'],
-        'fk_tipo_leitura': ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO,
-        'timestamp': datetime.now(),
-        'categoria': request.vars['ret_descricao_vinculo'],
-        'matricula': request.vars['ret_matricula']
-    }
-
-    db.log_refeicoes.bulk_insert([params])
-    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
-
-
 def _busca_refeicao_atual():
 
     """
-    Compara como horário e retorna a refeição atual
+    Baseado no horario atual, retorna, se existir, a refeição válida no momento.
+    Retorna None caso não existam refeições ativas no horário atual.
 
     """
 
@@ -225,3 +188,20 @@ def _busca_refeicoes_realizadas(matricula):
     return refeicoes_realizadas
 
 
+def _refeicao_ja_realizada(refeicoes_realizadas, row):
+    if not refeicoes_realizadas:
+        return False
+
+    # return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
+
+
+def _registra_log_refeicoes(refeicao_id, matricula, categoria_desc, acao_id):
+    params = {
+        'fk_refeicao': refeicao_id,
+        'fk_tipo_leitura': acao_id,
+        'timestamp': datetime.now(),
+        'categoria': categoria_desc,
+        'matricula': matricula
+    }
+
+    db.log_refeicoes.bulk_insert([params])
