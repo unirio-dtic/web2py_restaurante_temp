@@ -83,7 +83,7 @@ def index():
     # if form2 and form2.accepts(request, session):
     #     response.flash = 'foi'
     #     pass
-
+    # Exibir as refeições cadastradas
     horarios = []
 
     for row in db(db.refeicoes).select():
@@ -91,12 +91,14 @@ def index():
                             _name='img_' + str(row.descricao), _style="border: 2px solid black;" if row.id == refeicao.id else None))
         horarios.append(SPAN(str(row.descricao), _name='caption',
                              _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
-
+    # Exibir contador geral de refeições
     contadores = {}
-    # TODO: Revisar contador de refeições
+
     for row in db(db.refeicoes).select():
         if row is not None:
-            contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id).count()
+            contadores[str(row.descricao)] = \
+                db((db.log_refeicoes.fk_refeicao == row.id) &
+                   (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).count()
 
     return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
                 form2=form2, horarios=horarios, contadores=contadores,
