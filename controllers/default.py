@@ -8,6 +8,7 @@
 ## - download is for downloading files uploaded in the db (does streaming)
 #########################################################################
 
+
 def index():
     """
     example action using the internationalization operator T and flash
@@ -36,7 +37,7 @@ def ler_horario():
                            'preco_subsidiado': 'Preço Subsidiado'},
                    separator=': ', upload=URL('download'))
 
-    registros = SQLFORM.grid(db.refeicoes, deletable=True)  #db(db.refeicoes).select()
+    registros = SQLFORM.grid(db.refeicoes, deletable=True)  # db(db.refeicoes).select()
 
     if form.process().accepted:
         response.flash ='Cadastrado com sucesso!'
@@ -128,6 +129,7 @@ def call():
     supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
     """
     return service()
+
 
 def test():
 

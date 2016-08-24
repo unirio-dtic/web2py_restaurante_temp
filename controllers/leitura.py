@@ -14,7 +14,7 @@ def index():
     response.meta.time = request.now
     refeicao = _busca_refeicao_atual()
     if not refeicao:
-        redirect(URL('default', 'index'))  # TODO fazer uma pagina dizendo que nao possuem refeicoes no horario atual
+        redirect(URL('leitura', 'preparando_refeicao'))  # TODO fazer uma pagina dizendo que nao possuem refeicoes no horario atual
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
     response.subtitle = 'Controle de refeições - ' + refeicao.descricao
@@ -93,14 +93,25 @@ def index():
                              _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
 
     contadores = {}
-    # TODO: contador sempre retorna 1 a mais - descobrir motivo
+    # TODO: Revisar contador de refeições
     for row in db(db.refeicoes).select():
         if row is not None:
-            contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id).count(db.log_refeicoes.fk_tipo_leitura != 1)
+            contadores[str(row.descricao)] = db(db.log_refeicoes.fk_refeicao == row.id).count()
 
     return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
                 form2=form2, horarios=horarios, contadores=contadores,
                 pagamento_realizado=pagamento_realizado)
+
+
+def preparando_refeicao():
+    response.title = 'RESTAURANTE UNIVERSITÁRIO'
+    response.subtitle = 'Preparando próxima refeição'
+
+    form = (A(IMG(_src=URL('static', 'images/aguardar_refeicao.jpg'),
+                  _href=URL('leitura', 'index')), BR(),
+            LABEL('Por favor, aguarde o horário da proxima refeição...')))
+
+    return dict(form=form)
 
 
 def refeicao_ja_realizada(refeicoes_realizadas, row):
@@ -202,8 +213,10 @@ def _busca_refeicoes_realizadas(matricula):
     Retorna refeicoes realizadas por um determinada matrícula NO DIA:
 
     """
-    return db(db.log_refeicoes.matricula == matricula and
-              db.log_refeicoes.timestamp == datetime.today() and
-              db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA).select()
+    refeicoes_realizadas = db((db.log_refeicoes.matricula == matricula) &
+                              (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).select()
+    for refeicao in refeicoes_realizadas:
+        refeicao.exclude(lambda r: r.timestamp.date() == datetime.date(datetime.now()))
+    return refeicoes_realizadas
 
 

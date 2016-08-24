@@ -124,7 +124,7 @@ db.define_table('tipo_leitura',
 db.define_table('log_refeicoes',
                 Field('fk_refeicao', 'reference refeicoes', label='Refeição'),  # Chave estrangeira: id/refeicoes
                 Field('fk_tipo_leitura', 'reference tipo_leitura', label='Operação'),  # Chave estrangeira: id/tipo_leitura
-                Field('timestamp', 'datetime', default=request.now, label='Hora do registro'),
+                Field('timestamp', 'datetime', default=request.now, label='Hora do registro'), # todo substituir request por datetime
                 Field('categoria', 'string', length=100),
                 Field('matricula', 'string', length=100))
 
