@@ -192,7 +192,7 @@ def _refeicao_ja_realizada(refeicoes_realizadas, row):
     if not refeicoes_realizadas:
         return False
 
-    # return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
+    return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
 
 
 def _registra_log_refeicoes(refeicao_id, matricula, categoria_desc, acao_id):
