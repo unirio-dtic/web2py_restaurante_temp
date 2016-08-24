@@ -20,7 +20,7 @@ def index():
     response.subtitle = 'Controle de refeições - ' + refeicao.descricao
 
     form = FORM(T('Matrícula: '),
-                INPUT(_name='matricula', requires=IS_NOT_EMPTY()),
+                INPUT(_name='matricula', requires=IS_NOT_EMPTY(), _error=T('Insira uma matrícula')),
                 INPUT(_type='submit'),
                 BR())
     src_foto = URL("static", "images/nova_silhueta.png")
@@ -87,7 +87,7 @@ def index():
     horarios = []
 
     for row in db(db.refeicoes).select():
-        horarios.append(IMG(_src=URL("static", "images/caixa2.png" if refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa1.png"),
+        horarios.append(IMG(_src=URL("static", "images/caixa_vermelha.png" if refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa_azul.png"),
                             _name='img_' + str(row.descricao), _style="border: 2px solid black;" if row.id == refeicao.id else None))
         horarios.append(SPAN(str(row.descricao), _name='caption',
                              _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
@@ -109,9 +109,8 @@ def preparando_refeicao():
     response.title = 'RESTAURANTE UNIVERSITÁRIO'
     response.subtitle = 'Preparando próxima refeição'
 
-    form = (A(IMG(_src=URL('static', 'images/aguardar_refeicao.jpg'),
-                  _href=URL('leitura', 'index')), BR(),
-            LABEL('Por favor, aguarde o horário da proxima refeição...')))
+    form = (DIV(A(IMG(_src=URL('static', 'images/aguardar_refeicao.jpg')), BR(),
+                  LABEL(T("Aguarde o horário da próxima refeição")), _href=URL('leitura', 'index'))))
 
     return dict(form=form)
 
@@ -208,6 +207,8 @@ def _busca_refeicao_atual():
     return db((db.refeicoes.hr_fim >= response.meta.time) &
               (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
+# db(db.refeicoes.hr_fim >= response.meta.time).select().first()
+
 
 def _busca_refeicoes_realizadas(matricula):
     """
@@ -216,9 +217,11 @@ def _busca_refeicoes_realizadas(matricula):
 
     """
     refeicoes_realizadas = db((db.log_refeicoes.matricula == matricula) &
-                              (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).select()
-    for refeicao in refeicoes_realizadas:
-        refeicao.exclude(lambda r: r.timestamp.date() == datetime.date(datetime.now()))
+                              (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA) &
+                              (db.log_refeicoes.timestamp.day() == datetime.now().date().day) &
+                              (db.log_refeicoes.timestamp.month() == datetime.now().date().month) &
+                              (db.log_refeicoes.timestamp.year() == datetime.now().date().year)).select()
+
     return refeicoes_realizadas
 
 

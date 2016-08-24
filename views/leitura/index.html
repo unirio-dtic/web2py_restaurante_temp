@@ -1,5 +1,16 @@
 {{extend '_unirio/layout.html'}}
-
+<head>
+    <style>
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .container {
+            position: relative;
+        }
+    </style>
 <div align="center">
     {{=form}}
     <table><tr><td width="640px" height="360px" align="center" ><img src={{=src_foto}}></td></tr></table>
