@@ -4,6 +4,7 @@ from datetime import datetime
 __author__ = 'carlosfaruolo'
 
 
+@auth.requires_membership(role='admin')
 def index():
     """
     Definindo valores de exibição
