@@ -43,19 +43,34 @@ db.auth_user.username.label = 'CPF'
 db.define_table('refeicoes',
                 Field('descricao', 'string', label='Descrição'),
                 Field('hr_inicio', 'time', label='Início'),
-                Field('hr_fim', 'time', label='Termino'),
-                Field('preco_total', 'decimal(10,2)', label='Preço Normal'),
-                Field('preco_subsidiado', 'decimal(10,2)', label='Preço Subsidiado')
+                Field('hr_fim', 'time', label='Termino')
+                )
+
+db.define_table('vinculo',
+                Field('tipo_vinculo', 'integer', label='ID do tipo de vinculo no SIE'),
+                Field('descricao', 'string', label='Descrição')
+                )
+
+db.define_table('tipo_preco',
+                Field('descricao', 'string', label='Descrição')
+                )
+
+db.define_table('precos',
+                Field('fk_refeicao', 'reference refeicoes', label='Tipo de refeição'),
+                Field('fk_vinculo', 'reference vinculo', label='Tipo de vínculo / Categoria'),
+                Field('fk_tipo_preco', 'reference tipo_preco', label='Tipo de preço'),
+                Field('quantia', 'decimal(10,2)', label='Quantia')
                 )
 
 db.define_table('tipo_leitura',
-                Field('descricao', 'string')
+                Field('descricao', 'string', label='Descrição')
                 )
 
 db.define_table('log_refeicoes',
                 Field('fk_refeicao', 'reference refeicoes', label='Refeição'),  # Chave estrangeira: id/refeicoes
+                Field('fk_preco', 'reference precos', label='Preço'),  # Chave estrangeira: id/preço
                 Field('fk_tipo_leitura', 'reference tipo_leitura', label='Operação'),  # Chave estrangeira: id/tipo_leitura
-                Field('timestamp', 'datetime', default=datetime.now(), label='Hora do registro'),  # todo substituir request por datetime
+                Field('timestamp', 'datetime', default=datetime.now(), label='Hora do registro'),
                 Field('categoria', 'string'),
                 Field('matricula', 'string')
                 )
@@ -65,8 +80,11 @@ db.refeicoes.descricao.requires = IS_NOT_IN_DB(db, 'refeicoes.descricao')
 db.refeicoes.hr_inicio.requires = IS_TIME(error_message='Formato de hora: HH:MM')
 db.refeicoes.hr_fim.requires = IS_NOT_EMPTY()
 db.refeicoes.hr_fim.requires = IS_TIME(error_message='Formato de hora: HH:MM')
-db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = \
-    lambda value, row: DIV('R$ %.2f' % (0 if value is None else value))
+db.precos.fk_refeicao.requires = IS_IN_DB(db, db.refeicoes.id, '%(descricao)s')
+db.precos.fk_vinculo.requires = IS_IN_DB(db, db.vinculo.id, '%(descricao)s')
+db.precos.fk_tipo_preco.requires = IS_IN_DB(db, db.tipo_preco.id, '%(descricao)s')
+# db.refeicoes.preco_total.represent = db.refeicoes.preco_subsidiado.represent = \
+#     lambda value, row: DIV('R$ %.2f' % (0 if value is None else value))
 
 db.log_refeicoes.fk_refeicao.represent = lambda value, row: db(db.refeicoes.id == value).select()[0].descricao
 db.log_refeicoes.fk_tipo_leitura.represent = lambda value, row: db(db.tipo_leitura.id == value).select()[0].descricao
