@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from unirio.api.exceptions import NoContentException
 
 __author__ = 'carlosfaruolo'
 
@@ -41,12 +40,12 @@ def index():
         dados = api.get_single_result('V_PESSOAS_DADOS', {'MATRICULA': form.vars['matricula']}, bypass_no_content_exception=True)
 
         if dados is not None:
-            _registra_leitura(refeicao_atual.id, form.vars['matricula'], dados['descricao_vinculo'])
             refeicoes_realizadas = _busca_refeicoes_realizadas(dados['matricula'])
 
             session.dados = dados
             session.id_refeicao = refeicao_atual.id
 
+            _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
             ja_fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO not in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
 
             subsidio_permitido = (dados['vinculo_item'] == ID_TIPO_ALUNO_GRADUACAO
@@ -124,29 +123,8 @@ def preparando_refeicao():
 
 
 def registra_compra():
-    _registra_log_refeicoes(session.id_refeicao,
-                            session.dados['matricula'],
-                            session.dados['descricao_vinculo'],
-                            request.vars['tipo_pagamento'])
+    _registra_log_refeicoes(request.vars['tipo_pagamento'])
     redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
-
-
-def registra_compra_total():
-    _registra_log_refeicoes(request.vars['ret_refeicao_id'], request.vars['ret_matricula'], request.vars['ret_descricao_vinculo'], ID_TIPO_LEITURA_PAGAMENTO_TOTAL)
-    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
-
-
-def registra_compra_subs():
-    _registra_log_refeicoes(request.vars['ret_refeicao_id'], request.vars['ret_matricula'], request.vars['ret_descricao_vinculo'], ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO)
-    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
-
-
-def _registra_leitura(refeicao, matricula, categoria):
-    """
-    Registra a leitura da matricula
-
-    """
-    _registra_log_refeicoes(refeicao, matricula, categoria, ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
 
 
 def _busca_foto(dados):
@@ -203,13 +181,12 @@ def _refeicao_ja_realizada(refeicoes_realizadas, row):
     return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
 
 
-def _registra_log_refeicoes(refeicao_id, matricula, categoria_desc, acao_id):
+def _registra_log_refeicoes(acao_id):
     params = {
-        'fk_refeicao': refeicao_id,
+        'fk_refeicao': session.id_refeicao,
         'fk_tipo_leitura': acao_id,
-        'timestamp': datetime.now(),
-        'categoria': categoria_desc,
-        'matricula': matricula
+        'categoria': session.dados['descricao_vinculo'],
+        'matricula': session.dados['matricula']
     }
 
     db.log_refeicoes.bulk_insert([params])
