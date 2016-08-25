@@ -134,7 +134,8 @@ def _busca_foto(dados):
     foto = None
     try:
         result = api.get_single_result(tabela, {'matricula': dados['matricula']}, bypass_no_content_exception=True)
-        foto = 'data:image/jpeg;base64,' + result['foto']
+        if result['foto']:
+            foto = 'data:image/jpeg;base64,' + result['foto']
     except (TypeError, KeyError):
         # Caso de matricula invalida, result == None ou não tem a coluna foto
         # todo: Remover keyerror quando corrigir a view
