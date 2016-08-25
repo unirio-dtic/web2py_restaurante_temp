@@ -68,8 +68,10 @@ def index():
             foto = _busca_foto(dados)
             if foto:
                 src_foto = foto
-
-            response.flash = 'Lido'
+                response.flash = 'Lido'
+            else:
+                # todo não deviamos tratar isso, mas...
+                response.flash = 'Foto não encontrada'
         else:
             response.flash = 'Matricula inexistente ou ausente do banco de dados.'
 
@@ -132,9 +134,8 @@ def _busca_foto(dados):
     foto = None
     try:
         result = api.get_single_result(tabela, {'matricula': dados['matricula']}, bypass_no_content_exception=True)
-        if result['foto']:
-            foto = 'data:image/jpeg;base64,' + result['foto']
-    except (AttributeError, KeyError):
+        foto = 'data:image/jpeg;base64,' + result['foto']
+    except (TypeError, KeyError):
         # Caso de matricula invalida, result == None ou não tem a coluna foto
         # todo: Remover keyerror quando corrigir a view
         pass
