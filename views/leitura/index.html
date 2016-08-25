@@ -46,8 +46,8 @@
 <hr size="2"/>
 <table width="100%">
     <tr>
-        {{for c in contadores:}}
-            <td style="width: 33%; text-align: center" >{{=c}} = {{=contadores[c]}}</td>
+        {{for desc,count in contadores.iteritems():}}
+            <td style="width: 33%; text-align: center" >{{=desc}} = {{=count}}</td>
         {{pass}}
     </tr>
 </table>
