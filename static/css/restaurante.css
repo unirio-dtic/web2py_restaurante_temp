@@ -1,0 +1,21 @@
+.caixa_refeicao
+{
+    border-radius: 10px;
+    margin: 4px;
+    padding: 20px;
+}
+
+.caixa_refeicao_nao_realizada
+{
+    background-color: #00c4ff;
+}
+
+.caixa_refeicao_realizada
+{
+    background-color: #db2d20;
+}
+
+.caixa_refeicao_atual
+{
+    border: 2px solid black;
+}
