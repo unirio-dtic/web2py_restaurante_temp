@@ -16,9 +16,9 @@
 
 <div class="row">
     {{for info_refeicao in info_refeicoes_do_dia:}}
-        <span class='{{=info_refeicao['classes']}}'>
+        <div class='{{=info_refeicao['classes']}} col-md-2'>
             {{=info_refeicao['descricao']}}
-        </span>
+        </div>
     {{pass}}
 </div>
 
