@@ -141,20 +141,19 @@ def _busca_dados_por_matricula(matricula):
 
 
 def _busca_foto(dados):
-    tabela = None
-    foto = None
-
-    if dados['vinculo_item'] in [1, 2]:  # ou seja, aluno
+    if dados['vinculo_item'] in [ID_TIPO_VINCULO_CATEGORIA_ALUNO_GRAD, ID_TIPO_VINCULO_CATEGORIA_ALUNO_POS]:
         tabela = 'V_ALU_FOTO'
     else:
         tabela = 'V_FUNC_FOTO'
 
+    foto = None
     try:
-        result = api.get_single_result(tabela, {'MATRICULA': dados['matricula']}, bypass_no_content_exception=True)
-        if result.content['foto'] is not None:
-            foto = 'data:image/jpeg;base64,' + result.content['foto']
-    except AttributeError:
-        # Caso de matricula invalida, result == None
+        result = api.get_single_result(tabela, {'matricula': dados['matricula']}, bypass_no_content_exception=True)
+        if result['foto']:
+            foto = 'data:image/jpeg;base64,' + result['foto']
+    except (AttributeError, KeyError):
+        # Caso de matricula invalida, result == None ou não tem a coluna foto
+        # todo: Remover keyerror quando corrigir a view
         pass
     return foto
 
