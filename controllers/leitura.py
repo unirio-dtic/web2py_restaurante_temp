@@ -115,12 +115,14 @@ def index():
                 pagamento_realizado=pagamento_realizado)
 
 
+@auth.requires_membership(role='admin')
 def preparando_refeicao():
     response.title = 'RESTAURANTE UNIVERSITÁRIO'
     response.subtitle = 'Preparando próxima refeição'
     return {}
 
 
+@auth.requires_membership(role='admin')
 def registra_compra():
     _registra_log_refeicoes(request.vars['tipo_pagamento'])
     redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
