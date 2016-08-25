@@ -38,12 +38,12 @@
 
 <hr size="2"/>
 <div class="row">
-    <table width="100%">
+    <table width="100%" id="tabela_contador">
         <thead></thead>
         <tbody>
             <tr>
                 {{for desc,count in contadores.iteritems():}}
-                    <td style="width: 33%; text-align: center" >({{=desc}}: {{=count}})</td>
+                    <td>({{=desc}}: {{=count}})</td>
                 {{pass}}
             </tr>
         </tbody>
