@@ -1,7 +1,14 @@
 {{left_sidebar_enabled=False}}
 {{right_sidebar_enabled=False}}
 {{('message' in globals())}}
-{{extend '_unirio/layout.html'}}
+{{extend 'layout.html'}}
+
 <div align="center" style="align-items: baseline">
-{{=form}}
+    <a href="{{=URL('leitura', 'index')}}">
+        <img src="{{=URL('static', 'images/aguardar_refeicao.jpg')}}">
+        <br>
+        <label>
+            Aguarde o horário da próxima refeição
+        </label>
+    </a>
 </div>

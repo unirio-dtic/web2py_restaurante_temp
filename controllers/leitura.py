@@ -115,11 +115,7 @@ def index():
 def preparando_refeicao():
     response.title = 'RESTAURANTE UNIVERSITÁRIO'
     response.subtitle = 'Preparando próxima refeição'
-
-    form = (DIV(A(IMG(_src=URL('static', 'images/aguardar_refeicao.jpg')), BR(),
-                  LABEL(T("Aguarde o horário da próxima refeição")), _href=URL('leitura', 'index'))))
-
-    return dict(form=form)
+    return {}
 
 
 def registra_compra():
