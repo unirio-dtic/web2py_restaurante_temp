@@ -46,11 +46,11 @@ def index():
             session.id_refeicao = refeicao_atual.id
 
             _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
-            ja_fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO not in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
+            fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
 
             subsidio_permitido = (dados['vinculo_item'] == ID_TIPO_ALUNO_GRADUACAO
                                   and refeicao_atual.id != 1  # TODO tem que se verificar o 'tipo' de refeição, e não o id dela. Cabe uma analise de uma columa ou uma tabela a mais no modelo.
-                                  and ja_fez_refeicao_subsidiada)
+                                  and not fez_refeicao_subsidiada)
 
             precos = [{
                 'label': db.refeicoes.preco_total.label,
