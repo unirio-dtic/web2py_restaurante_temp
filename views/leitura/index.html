@@ -1,53 +1,51 @@
-{{extend '_unirio/layout.html'}}
-<head>
-    <style>
-        .center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .container {
-            position: relative;
-        }
-    </style>
-<div align="center">
+{{extend 'layout.html'}}
+
+<div class="row">
     {{=form}}
-    <table><tr><td width="640px" height="360px" align="center" ><img src={{=src_foto}}></td></tr></table>
-
-    {{if desc:}}
-        <div>{{=desc['nome']}} <br> {{=desc['matricula']}} <br> {{=desc['descricao_vinculo']}}</div>
-    {{else:}}
-        <div>{{response.flash}}</div>
-    {{pass}}
 </div>
 
-<div align="center">
-    {{for horario in horarios:}}
-        {{=horario}}
-    {{pass}}
+<div class="row">
+    <img src={{=src_foto}}>
 </div>
 
-{{if form2:}}
-    <div align="center">
-        {{=form2}}
+{{if desc:}}
+    <div class="row">
+        {{=desc['nome']}} <br> {{=desc['matricula']}} <br> {{=desc['descricao_vinculo']}}
     </div>
 {{pass}}
 
+<div class="row">
+    {{for info_refeicao in info_refeicoes_do_dia:}}
+        <span class='{{=info_refeicao['classes']}}'>
+            {{=info_refeicao['descricao']}}
+        </span>
+    {{pass}}
+</div>
+
+<div class="row">
+    {{for preco in precos or []:}}
+        <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(tipo_pagamento=preco['tipo_pagamento']))}}" role="button">{{=preco['label']}}: R$ {{=preco['quantia']}}</a>
+    {{pass}}
+</div>
+
+
+
 {{if pagamento_realizado:}}
-    <div align="center">
+    <div class="row">
         <h3>Pagamento realizado!</h3>
     </div>
 {{pass}}
 
-<br>
-<br>
-<br>
 <hr size="2"/>
-<table width="100%">
-    <tr>
-        {{for desc,count in contadores.iteritems():}}
-            <td style="width: 33%; text-align: center" >{{=desc}} = {{=count}}</td>
-        {{pass}}
-    </tr>
-</table>
+<div class="row">
+    <table width="100%">
+        <thead></thead>
+        <tbody>
+            <tr>
+                {{for desc,count in contadores.iteritems():}}
+                    <td style="width: 33%; text-align: center" >({{=desc}}: {{=count}})</td>
+                {{pass}}
+            </tr>
+        </tbody>
+    </table>
+</div>

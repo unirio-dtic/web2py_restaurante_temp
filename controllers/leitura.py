@@ -10,14 +10,19 @@ def index():
     Definindo valores de exibição
 
     """
+    pagamento_realizado = request.vars['pagamento_realizado']  # flag indicando se estamos voltando de um pagamento
+
     # definindo qual refeição está sendo servida
     response.meta.time = request.now
-    refeicao = _busca_refeicao_atual()
-    if not refeicao:
-        redirect(URL('leitura', 'preparando_refeicao'))  # TODO fazer uma pagina dizendo que nao possuem refeicoes no horario atual
+    refeicao_atual = _busca_refeicao_atual()
+
+    refeicoes_do_dia = db(db.refeicoes).select() or []
+
+    if not refeicao_atual:
+        redirect(URL('leitura', 'preparando_refeicao'))
 
     response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
-    response.subtitle = 'Controle de refeições - ' + refeicao.descricao
+    response.subtitle = 'Controle de refeições - ' + refeicao_atual.descricao
 
     form = FORM(T('Matrícula: '),
                 INPUT(_name='matricula', requires=IS_NOT_EMPTY(), _error=T('Insira uma matrícula')),
@@ -25,47 +30,44 @@ def index():
                 BR())
     src_foto = URL("static", "images/nova_silhueta.png")
 
-    form2 = None
+    precos = None
     dados = None
     refeicoes_realizadas = None
-
-    pagamento_realizado = request.vars['pagamento_realizado']
 
     # aqui virao coisas do form da matricula
     if form.accepts(request, session):
         pagamento_realizado = None
-        dados = None
-        try:
-            dados = _busca_dados_por_matricula(form.vars['matricula'])
-        except NoContentException:
-            dados = None
+
+        dados = api.get_single_result('V_PESSOAS_DADOS', {'MATRICULA': form.vars['matricula']}, bypass_no_content_exception=True)
 
         if dados is not None:
-            _registra_leitura(refeicao.id, form.vars['matricula'], dados['descricao_vinculo'])
+            _registra_leitura(refeicao_atual.id, form.vars['matricula'], dados['descricao_vinculo'])
             refeicoes_realizadas = _busca_refeicoes_realizadas(dados['matricula'])
+
+            session.dados = dados
+            session.id_refeicao = refeicao_atual.id
 
             ja_fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO not in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
 
             subsidio_permitido = (dados['vinculo_item'] == ID_TIPO_ALUNO_GRADUACAO
-                                  and refeicao.id != 1  # TODO tem que se verificar o 'tipo' de refeição, e não o id dela. Cabe uma analise de uma columa ou uma tabela a mais no modelo.
+                                  and refeicao_atual.id != 1  # TODO tem que se verificar o 'tipo' de refeição, e não o id dela. Cabe uma analise de uma columa ou uma tabela a mais no modelo.
                                   and ja_fez_refeicao_subsidiada)
 
-            form2 = FORM(
-                INPUT(_name='ret_matricula', _type='text', _value=dados['matricula'], _style='visibility:hidden'),
-                INPUT(_name='ret_refeicao_id', _type='text', _value=str(refeicao.id), _style='visibility:hidden'),
-                INPUT(_name='ret_descricao_vinculo', _type='text', _value=dados['descricao_vinculo'].encode('utf-8'), _style='visibility:hidden'),
-                BR(),
-                INPUT(_name='but_pag_total', _type='button',
-                      _value=T("Pagamento total: R$ ") + str(refeicao.preco_total).replace('.', ','),
-                      _onclick="ajax('registra_compra_total',['ret_refeicao_id', 'ret_matricula', 'ret_descricao_vinculo'], '')"),
-                INPUT(_name='but_pag_subs', _type='button',
-                      _value=T("Pagamento subsidiado: R$ ") + str(refeicao.preco_subsidiado).replace('.', ','),
-                      _onclick="ajax('registra_compra_subs',['ret_refeicao_id', 'ret_matricula', 'ret_descricao_vinculo'], '')",
-                      # ocultar opção de pagamento subsidiado caso não seja aluno graduação ou a refeição é café da manhã.
-                      _style='visibility:visible' if subsidio_permitido else 'visibility:hidden'),)
+            precos = [{
+                'label': db.refeicoes.preco_total.label,
+                'quantia': refeicao_atual['preco_total'],
+                'tipo_pagamento': ID_TIPO_LEITURA_PAGAMENTO_TOTAL
+            }]
+
+            if subsidio_permitido:
+                precos.append({
+                    'label': db.refeicoes.preco_subsidiado.label,
+                    'quantia': refeicao_atual['preco_subsidiado'],
+                    'tipo_pagamento': ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO
+                })
 
             foto = _busca_foto(dados)
-            if foto is not None:
+            if foto:
                 src_foto = foto
 
             response.flash = 'Lido'
@@ -80,28 +82,34 @@ def index():
     else:
         response.flash = 'Insira a matrícula'
 
-    # if form2 and form2.accepts(request, session):
-    #     response.flash = 'foi'
-    #     pass
     # Exibir as refeições cadastradas
-    horarios = []
+    info_refeicoes_do_dia = []
 
-    for row in db(db.refeicoes).select():
-        horarios.append(IMG(_src=URL("static", "images/caixa_vermelha.png" if _refeicao_ja_realizada(refeicoes_realizadas, row) else "images/caixa_azul.png"),
-                            _name='img_' + str(row.descricao), _style="border: 2px solid black;" if row.id == refeicao.id else None))
-        horarios.append(SPAN(str(row.descricao), _name='caption',
-                             _style='position: absolute; margin-top: 40px; margin-left: -130px; color: white;'))
+    for row in refeicoes_do_dia:
+        info_refeicao = {
+            'descricao': row.descricao,
+            'classes': 'caixa_refeicao'
+        }
+
+        if row.id == refeicao_atual.id:
+            info_refeicao['classes'] += ' caixa_refeicao_atual'
+
+        if _refeicao_ja_realizada(refeicoes_realizadas, row):
+            info_refeicao['classes'] += ' caixa_refeicao_realizada'
+        else:
+            info_refeicao['classes'] += ' caixa_refeicao_nao_realizada'
+
+        info_refeicoes_do_dia.append(info_refeicao)
 
     # Exibir contador geral de refeições
     contadores = {}
-    rows = db(db.refeicoes).select()
-    for row in rows or []:
+    for row in refeicoes_do_dia:
         contadores[row.descricao] = \
             db((db.log_refeicoes.fk_refeicao == row.id) &
                (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).count()
 
-    return dict(form=form, refeicao=refeicao, desc=dados, src_foto=src_foto,
-                form2=form2, horarios=horarios, contadores=contadores,
+    return dict(form=form, refeicao=refeicao_atual, desc=dados, src_foto=src_foto,
+                precos=precos, info_refeicoes_do_dia=info_refeicoes_do_dia, contadores=contadores,
                 pagamento_realizado=pagamento_realizado)
 
 
@@ -113,6 +121,14 @@ def preparando_refeicao():
                   LABEL(T("Aguarde o horário da próxima refeição")), _href=URL('leitura', 'index'))))
 
     return dict(form=form)
+
+
+def registra_compra():
+    _registra_log_refeicoes(session.id_refeicao,
+                            session.dados['matricula'],
+                            session.dados['descricao_vinculo'],
+                            request.vars['tipo_pagamento'])
+    redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
 
 def registra_compra_total():
@@ -131,13 +147,6 @@ def _registra_leitura(refeicao, matricula, categoria):
 
     """
     _registra_log_refeicoes(refeicao, matricula, categoria, ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
-
-
-def _busca_dados_por_matricula(matricula):
-
-    params = {'MATRICULA': matricula}
-    result = api.get('V_PESSOAS_DADOS', params)
-    return result.content[0]
 
 
 def _busca_foto(dados):
@@ -169,7 +178,7 @@ def _busca_refeicao_atual():
     return db((db.refeicoes.hr_fim >= response.meta.time) &
               (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
-# db(db.refeicoes.hr_fim >= response.meta.time).select().first()
+    # return db(db.refeicoes).select().first()  # DEBUG
 
 
 def _busca_refeicoes_realizadas(matricula):
