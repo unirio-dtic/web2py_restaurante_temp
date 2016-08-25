@@ -1,5 +1,11 @@
 {{extend 'layout.html'}}
 
+<script>
+    jQuery(document).ready(function() {
+        jQuery("input[name=matricula]").focus();
+    });
+</script>        
+        
 <div class="row">
     {{=form}}
 </div>
