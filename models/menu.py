@@ -9,7 +9,7 @@ response.logo = DIV(A(IMG(_src=URL("static", "images/unirio/dtic-emblema-branco.
                       _href="http://www.unirio.br/dtic"),
                     A("DTIC/UNIRIO", _class="brand", _href="http://www.unirio.br/dtic"))
 response.title = 'RESTAURANTE UNIVERSITÁRIO - UNIRIO'
-response.subtitle = 'Boilerplate'
+response.subtitle = 'Controle de refeições - Login'
 
 ## read more at http://dev.w3.org/html5/markup/meta.name.html
 response.meta.author = 'DTIC - Sistemas <sistemas.tic@unirio.br>'
