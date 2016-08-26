@@ -48,7 +48,7 @@ def index():
 
             _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
 
-            precos_info = _precos_de_refeicao(refeicao_atual['id'], dados_matricula['vinculo_item'])
+            precos_info = _precos_de_refeicao(refeicao_atual['id'], dados_matricula['vinculo_item'], refeicoes_realizadas)
 
             foto = _busca_foto(dados_matricula)
             if foto:
@@ -146,13 +146,21 @@ def _busca_refeicao_atual():
               (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
 
-def _precos_de_refeicao(refeicao_id, vinculo_item):
+def _precos_de_refeicao(refeicao_id, vinculo_item, refeicoes_realizadas):
     """
     :type vinculo_item: int
     :type refeicao_id: int
     """
-    return db((db.v_precos.fk_refeicao == refeicao_id) &
-              (db.v_precos.vinculo_item == vinculo_item)).select()
+
+    ja_realizou_refeicao_com_desconto = refeicoes_realizadas and ID_TIPO_PRECO_DESCONTO in [refeicao['fk_tipo_preco'] for refeicao in refeicoes_realizadas]
+
+    if ja_realizou_refeicao_com_desconto:
+        return db((db.v_precos.fk_refeicao == refeicao_id) &
+                  (db.v_precos.vinculo_item == vinculo_item) &
+                  (db.v_precos.fk_tipo_preco == ID_TIPO_PRECO_TOTAL)).select()
+    else:
+        return db((db.v_precos.fk_refeicao == refeicao_id) &
+                  (db.v_precos.vinculo_item == vinculo_item)).select()
 
 
 def _total_de_refeicoes(refeicao_id):
