@@ -62,6 +62,16 @@ db.define_table('precos',
                 Field('quantia', 'decimal(10,2)', label='Quantia')
                 )
 
+db.define_table('v_precos',
+                Field('fk_refeicao', 'reference refeicoes', label='Tipo de refeição'),
+                Field('fk_vinculo', 'reference vinculo', label='Tipo de vínculo / Categoria'),
+                Field('fk_tipo_preco', 'reference tipo_preco', label='Tipo de preço'),
+                Field('quantia', 'decimal(10,2)', label='Quantia'),
+                Field('descricao', 'string'),
+                Field('tipo_vinculo', 'int'),
+                migrate=False
+                )
+
 db.define_table('tipo_leitura',
                 Field('descricao', 'string', label='Descrição')
                 )
@@ -74,6 +84,17 @@ db.define_table('log_refeicoes',
                 Field('categoria', 'string'),
                 Field('matricula', 'string')
                 )
+
+db.define_table('v_log_refeicoes',
+                Field('fk_refeicao', 'reference refeicoes', label='Refeição'),  # Chave estrangeira: id/refeicoes
+                Field('fk_preco', 'reference precos', label='Preço'),  # Chave estrangeira: id/preço
+                Field('fk_tipo_leitura', 'reference tipo_leitura', label='Operação'),  # Chave estrangeira: id/tipo_leitura
+                Field('timestamp', 'datetime', default=datetime.now(), label='Hora do registro'),
+                Field('categoria', 'string'),
+                Field('matricula', 'string'),
+                Field('fk_tipo_preco', 'integer'),
+                Field('quantia', 'decimal(10,2)'),
+                migrate=False)
 
 # TODO: definir validadores
 db.refeicoes.descricao.requires = IS_NOT_IN_DB(db, 'refeicoes.descricao')

@@ -16,7 +16,7 @@ def index():
     response.meta.time = request.now
     refeicao_atual = _busca_refeicao_atual()
 
-    refeicoes_do_dia = db(db.refeicoes).select() or []
+    refeicoes_do_dia = db(db.refeicoes).select(orderby='id') or []
 
     if not refeicao_atual:
         redirect(URL('leitura', 'preparando_refeicao'))
@@ -30,7 +30,7 @@ def index():
                 BR())
     src_foto = URL("static", "images/nova_silhueta.png")
 
-    precos = None
+    precos_info = None
     dados = None
     refeicoes_realizadas = None
 
@@ -40,31 +40,24 @@ def index():
 
         dados = api.get_single_result('V_PESSOAS_DADOS', {'MATRICULA': form.vars['matricula']}, bypass_no_content_exception=True)
 
-        if dados is not None:
+        if dados:
             refeicoes_realizadas = _busca_refeicoes_realizadas(dados['matricula'])
 
             session.dados = dados
             session.id_refeicao = refeicao_atual.id
 
             _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
-            fez_refeicao_subsidiada = ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO in [i['fk_tipo_leitura'] for i in refeicoes_realizadas]
+            fez_refeicao_subsidiada = ID_TIPO_PRECO_DESCONTO in [i['fk_tipo_preco'] for i in refeicoes_realizadas]
 
-            subsidio_permitido = (dados['vinculo_item'] == ID_TIPO_ALUNO_GRADUACAO
-                                  and refeicao_atual.id != 1  # TODO tem que se verificar o 'tipo' de refeição, e não o id dela. Cabe uma analise de uma columa ou uma tabela a mais no modelo.
-                                  and not fez_refeicao_subsidiada)
+            precos_info = []
 
-            precos = [{
-                'label': db.refeicoes.preco_total.label,
-                'quantia': refeicao_atual['preco_total'],
-                'tipo_pagamento': ID_TIPO_LEITURA_PAGAMENTO_TOTAL
-            }]
-
-            if subsidio_permitido:
-                precos.append({
-                    'label': db.refeicoes.preco_subsidiado.label,
-                    'quantia': refeicao_atual['preco_subsidiado'],
-                    'tipo_pagamento': ID_TIPO_LEITURA_PAGAMENTO_SUBSIDIADO
-                })
+            for preco in refeicao_atual.precos:
+                if preco['tipo_vinculo'] == dados['vinculo_item']:
+                    precos_info.append({
+                        'label': preco['descricao'],
+                        'quantia': preco['quantia'],
+                        'id_preco': preco['id']
+                    })
 
             foto = _busca_foto(dados)
             if foto:
@@ -111,7 +104,7 @@ def index():
                (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).count()
 
     return dict(form=form, refeicao=refeicao_atual, desc=dados, src_foto=src_foto,
-                precos=precos, info_refeicoes_do_dia=info_refeicoes_do_dia, contadores=contadores,
+                precos_info=precos_info, info_refeicoes_do_dia=info_refeicoes_do_dia, contadores=contadores,
                 pagamento_realizado=pagamento_realizado)
 
 
@@ -124,7 +117,7 @@ def preparando_refeicao():
 
 @auth.requires_membership(role='admin')
 def registra_compra():
-    _registra_log_refeicoes(request.vars['tipo_pagamento'])
+    _registra_log_refeicoes(ID_TIPO_LEITURA_PAGAMENTO, request.vars['id_preco'])
     redirect(URL('index', vars=dict(pagamento_realizado=True)), client_side=True)
 
 
@@ -154,10 +147,14 @@ def _busca_refeicao_atual():
 
     """
 
-    return db((db.refeicoes.hr_fim >= response.meta.time) &
-              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
+    refeicao = db((db.refeicoes.hr_fim >= response.meta.time) &
+                  (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
-    # return db(db.refeicoes).select().first()  # DEBUG
+    # refeicao = db(db.refeicoes).select().first()  # DEBUG
+
+    precos = db(db.v_precos.fk_refeicao == refeicao['id']).select()
+    refeicao.precos = precos
+    return refeicao
 
 
 def _busca_refeicoes_realizadas(matricula):
@@ -166,11 +163,11 @@ def _busca_refeicoes_realizadas(matricula):
     Retorna refeicoes realizadas por um determinada matrícula NO DIA:
 
     """
-    refeicoes_realizadas = db((db.log_refeicoes.matricula == matricula) &
-                              (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA) &
-                              (db.log_refeicoes.timestamp.day() == datetime.now().date().day) &
-                              (db.log_refeicoes.timestamp.month() == datetime.now().date().month) &
-                              (db.log_refeicoes.timestamp.year() == datetime.now().date().year)).select()
+    refeicoes_realizadas = db((db.v_log_refeicoes.matricula == matricula) &
+                              (db.v_log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA) &
+                              (db.v_log_refeicoes.timestamp.day() == datetime.now().date().day) &
+                              (db.v_log_refeicoes.timestamp.month() == datetime.now().date().month) &
+                              (db.v_log_refeicoes.timestamp.year() == datetime.now().date().year)).select()
 
     return refeicoes_realizadas
 
@@ -182,9 +179,10 @@ def _refeicao_ja_realizada(refeicoes_realizadas, row):
     return row.id in [i['fk_refeicao'] for i in refeicoes_realizadas]
 
 
-def _registra_log_refeicoes(acao_id):
+def _registra_log_refeicoes(acao_id, preco=None):
     params = {
         'fk_refeicao': session.id_refeicao,
+        'fk_preco': preco,
         'fk_tipo_leitura': acao_id,
         'categoria': session.dados['descricao_vinculo'],
         'matricula': session.dados['matricula']

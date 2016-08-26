@@ -29,8 +29,8 @@
 </div>
 
 <div class="row">
-    {{for preco in precos or []:}}
-        <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(tipo_pagamento=preco['tipo_pagamento']))}}" role="button">{{=preco['label']}}: R$ {{=preco['quantia']}}</a>
+    {{for preco_info in precos_info or []:}}
+        <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(id_preco=preco_info['id_preco']))}}" role="button">Preço {{=preco_info['label']}}: R$ {{=preco_info['quantia']}}</a>
     {{pass}}
 </div>
 
