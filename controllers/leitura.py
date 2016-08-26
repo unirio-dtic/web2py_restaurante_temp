@@ -47,7 +47,6 @@ def index():
             session.id_refeicao = refeicao_atual.id
 
             _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
-            fez_refeicao_subsidiada = ID_TIPO_PRECO_DESCONTO in [i['fk_tipo_preco'] for i in refeicoes_realizadas]
 
             precos_info = []
 
@@ -132,9 +131,8 @@ def _busca_foto(dados):
         result = api.get_single_result(tabela, {'matricula': dados['matricula']}, bypass_no_content_exception=True)
         if result['foto']:
             foto = 'data:image/jpeg;base64,' + result['foto']
-    except (TypeError, KeyError):
+    except TypeError:
         # Caso de matricula invalida, result == None ou não tem a coluna foto
-        # todo: Remover keyerror quando corrigir a view
         pass
     return foto
 
