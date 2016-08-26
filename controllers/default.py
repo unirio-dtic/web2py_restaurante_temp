@@ -18,7 +18,8 @@ def index():
     return auth.wiki()
     """
     response.subtitle = 'Restaurante Universitário'
-    response.flash = T("Hello World")
+
+    redirect(URL('leitura','index'))
     return dict(message=T('Welcome to web2py!'))
 
 
