@@ -14,9 +14,11 @@
     <img src={{=src_foto}}>
 </div>
 
-{{if desc:}}
+{{if dados_matricula:}}
     <div class="row">
-        {{=desc['nome']}} <br> {{=desc['matricula']}} <br> {{=desc['descricao_vinculo']}}
+        {{=dados_matricula['nome']}} <br>
+        {{=dados_matricula['matricula']}} <br>
+        {{=dados_matricula['descricao_vinculo']}}
     </div>
 {{pass}}
 
@@ -30,7 +32,7 @@
 
 <div class="row">
     {{for preco_info in precos_info or []:}}
-        <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(id_preco=preco_info['id_preco']))}}" role="button">Preço {{=preco_info['label']}}: R$ {{=preco_info['quantia']}}</a>
+        <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(id_preco=preco_info['id']))}}" role="button">Preço {{=preco_info['descricao']}}: R$ {{=preco_info['quantia']}}</a>
     {{pass}}
 </div>
 
@@ -48,8 +50,8 @@
         <thead></thead>
         <tbody>
             <tr>
-                {{for desc,count in contadores.iteritems():}}
-                    <td>({{=desc}}: {{=count}})</td>
+                {{for label, count in contadores.iteritems():}}
+                    <td>({{=label}}: {{=count}})</td>
                 {{pass}}
             </tr>
         </tbody>

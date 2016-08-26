@@ -8,7 +8,6 @@ __author__ = 'carlosfaruolo'
 def index():
     """
     Definindo valores de exibição
-
     """
     pagamento_realizado = request.vars['pagamento_realizado']  # flag indicando se estamos voltando de um pagamento
 
@@ -16,6 +15,7 @@ def index():
     response.meta.time = request.now
     refeicao_atual = _busca_refeicao_atual()
 
+    # todo: Implementar cache
     refeicoes_do_dia = db(db.refeicoes).select(orderby='id') or []
 
     if not refeicao_atual:
@@ -31,34 +31,26 @@ def index():
     src_foto = URL("static", "images/nova_silhueta.png")
 
     precos_info = None
-    dados = None
+    dados_matricula = None
     refeicoes_realizadas = None
 
     # aqui virao coisas do form da matricula
     if form.accepts(request, session):
         pagamento_realizado = None
 
-        dados = api.get_single_result('V_PESSOAS_DADOS', {'MATRICULA': form.vars['matricula']}, bypass_no_content_exception=True)
+        dados_matricula = api.get_single_result('v_pessoas_dados', {'matricula': form.vars['matricula']}, bypass_no_content_exception=True)
 
-        if dados:
-            refeicoes_realizadas = _busca_refeicoes_realizadas(dados['matricula'])
+        if dados_matricula:
+            refeicoes_realizadas = _busca_refeicoes_realizadas(dados_matricula['matricula'])
 
-            session.dados = dados
+            session.dados = dados_matricula
             session.id_refeicao = refeicao_atual.id
 
             _registra_log_refeicoes(ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)
 
-            precos_info = []
+            precos_info = _precos_de_refeicao(refeicao_atual['id'], dados_matricula['vinculo_item'])
 
-            for preco in refeicao_atual.precos:
-                if preco['tipo_vinculo'] == dados['vinculo_item']:
-                    precos_info.append({
-                        'label': preco['descricao'],
-                        'quantia': preco['quantia'],
-                        'id_preco': preco['id']
-                    })
-
-            foto = _busca_foto(dados)
+            foto = _busca_foto(dados_matricula)
             if foto:
                 src_foto = foto
                 response.flash = 'Lido'
@@ -78,33 +70,36 @@ def index():
 
     # Exibir as refeições cadastradas
     info_refeicoes_do_dia = []
+    contadores = {}
 
-    for row in refeicoes_do_dia:
+    for refeicao in refeicoes_do_dia:
         info_refeicao = {
-            'descricao': row.descricao,
+            'descricao': refeicao.descricao,
             'classes': 'caixa_refeicao'
         }
 
-        if row.id == refeicao_atual.id:
+        if refeicao.id == refeicao_atual.id:
             info_refeicao['classes'] += ' caixa_refeicao_atual'
 
-        if _refeicao_ja_realizada(refeicoes_realizadas, row):
+        if _refeicao_ja_realizada(refeicoes_realizadas, refeicao):
             info_refeicao['classes'] += ' caixa_refeicao_realizada'
         else:
             info_refeicao['classes'] += ' caixa_refeicao_nao_realizada'
 
         info_refeicoes_do_dia.append(info_refeicao)
 
-    # Exibir contador geral de refeições
-    contadores = {}
-    for row in refeicoes_do_dia:
-        contadores[row.descricao] = \
-            db((db.log_refeicoes.fk_refeicao == row.id) &
-               (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).count()
+        contadores[refeicao.descricao] = _total_de_refeicoes(refeicao.id)
 
-    return dict(form=form, refeicao=refeicao_atual, desc=dados, src_foto=src_foto,
-                precos_info=precos_info, info_refeicoes_do_dia=info_refeicoes_do_dia, contadores=contadores,
-                pagamento_realizado=pagamento_realizado)
+    return dict(
+        form=form,
+        refeicao=refeicao_atual,
+        dados_matricula=dados_matricula,
+        src_foto=src_foto,
+        precos_info=precos_info,
+        info_refeicoes_do_dia=info_refeicoes_do_dia,
+        contadores=contadores,
+        pagamento_realizado=pagamento_realizado
+    )
 
 
 @auth.requires_membership(role='admin')
@@ -145,14 +140,24 @@ def _busca_refeicao_atual():
 
     """
 
-    refeicao = db((db.refeicoes.hr_fim >= response.meta.time) &
-                  (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
+    # return db(db.refeicoes).select().first()  # DEBUG
 
-    # refeicao = db(db.refeicoes).select().first()  # DEBUG
+    return db((db.refeicoes.hr_fim >= response.meta.time) &
+              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
-    precos = db(db.v_precos.fk_refeicao == refeicao['id']).select()
-    refeicao.precos = precos
-    return refeicao
+
+def _precos_de_refeicao(refeicao_id, vinculo_item):
+    """
+    :type vinculo_item: int
+    :type refeicao_id: int
+    """
+    return db((db.v_precos.fk_refeicao == refeicao_id) &
+              (db.v_precos.vinculo_item == vinculo_item)).select()
+
+
+def _total_de_refeicoes(refeicao_id):
+    return db((db.log_refeicoes.fk_refeicao == refeicao_id) &
+           (db.log_refeicoes.fk_tipo_leitura != ID_TIPO_LEITURA_LEITURA_DE_MATRICULA)).count()
 
 
 def _busca_refeicoes_realizadas(matricula):

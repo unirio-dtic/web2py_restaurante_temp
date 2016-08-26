@@ -47,7 +47,7 @@ db.define_table('refeicoes',
                 )
 
 db.define_table('vinculo',
-                Field('tipo_vinculo', 'integer', label='ID do tipo de vinculo no SIE'),
+                Field('vinculo_item', 'integer', label='ID do tipo de vinculo no SIE'),
                 Field('descricao', 'string', label='Descrição')
                 )
 
@@ -68,7 +68,7 @@ db.define_table('v_precos',
                 Field('fk_tipo_preco', 'reference tipo_preco', label='Tipo de preço'),
                 Field('quantia', 'decimal(10,2)', label='Quantia'),
                 Field('descricao', 'string'),
-                Field('tipo_vinculo', 'int'),
+                Field('vinculo_item', 'int'),
                 migrate=False
                 )
 
