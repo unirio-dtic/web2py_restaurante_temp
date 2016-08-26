@@ -68,8 +68,8 @@ db.define_table('v_precos',
                 Field('fk_tipo_preco', 'reference tipo_preco', label='Tipo de preço'),
                 Field('quantia', 'decimal(10,2)', label='Quantia'),
                 Field('descricao', 'string'),
-                Field('vinculo_item', 'int'),
-                migrate=False
+                Field('vinculo_item', 'integer'),
+                migrate=True
                 )
 
 db.define_table('tipo_leitura',
