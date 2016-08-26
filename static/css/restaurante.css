@@ -1,19 +1,20 @@
 .caixa_refeicao
 {
     border-radius: 10px;
-    margin: 4px;
     padding: 20px;
-    float: left;
+    text-align: center;
 }
 
 .caixa_refeicao_nao_realizada
 {
-    background-color: #00c4ff;
+    background-color: #EEEEEE;
 }
 
 .caixa_refeicao_realizada
 {
-    background-color: #db2d20;
+    background-color: #EF3A44;
+    color: whitesmoke;
+    font-weight: bold;
 }
 
 .caixa_refeicao_atual
@@ -25,4 +26,31 @@
 {
     width: 33%;
     text-align: center;
+}
+
+.form_matricula
+{
+    text-align: center;
+}
+
+.submit-matricula
+{
+    margin-left: 4px;
+    margin-bottom: 2px;
+}
+
+.campo_matricula
+{
+    display: inline;
+    width: 50%;
+}
+
+.mostrador_refeicoes_do_dia
+{
+    width: 50%;
+    margin: 0 auto;
+}
+.botoes-refeicoes
+{
+    margin-top: 1%;
 }

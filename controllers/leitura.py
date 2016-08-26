@@ -25,9 +25,10 @@ def index():
     response.subtitle = 'Controle de refeições - ' + refeicao_atual.descricao
 
     form = FORM(T('Matrícula: '),
-                INPUT(_name='matricula', requires=IS_NOT_EMPTY(), _error=T('Insira uma matrícula')),
-                INPUT(_type='submit'),
-                BR())
+                INPUT(_name='matricula', requires=IS_NOT_EMPTY(), _error=T('Insira uma matrícula'), _class='form-control string campo_matricula'),
+                INPUT(_type='submit', _class='btn btn-default submit-matricula'),
+                BR(),
+                _class='form_matricula')
     src_foto = URL("static", "images/nova_silhueta.png")
 
     precos_info = None
@@ -140,10 +141,10 @@ def _busca_refeicao_atual():
 
     """
 
-    # return db(db.refeicoes).select().first()  # DEBUG
+    return db(db.refeicoes).select().first()  # DEBUG
 
-    return db((db.refeicoes.hr_fim >= response.meta.time) &
-              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
+    # return db((db.refeicoes.hr_fim >= response.meta.time) &
+    #           (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
 
 def _precos_de_refeicao(refeicao_id, vinculo_item, refeicoes_realizadas):

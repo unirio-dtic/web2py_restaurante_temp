@@ -5,35 +5,43 @@
         jQuery("input[name=matricula]").focus();
     });
 </script>        
-        
+
 <div class="row">
     {{=form}}
 </div>
+<hr size="2" width="90%"/>
 
-<div class="row">
-    <img src={{=src_foto}}>
+<div class="row" style="text-align: center">
+    <img src='{{=src_foto}}' style="height: 256px">
 </div>
 
 {{if dados_matricula:}}
-    <div class="row">
+    <div class="row" style="text-align: center; margin-top: 1%">
         {{=dados_matricula['nome']}} <br>
         {{=dados_matricula['matricula']}} <br>
         {{=dados_matricula['descricao_vinculo']}}
     </div>
 {{pass}}
 
-<div class="row">
-    {{for info_refeicao in info_refeicoes_do_dia:}}
-        <div class='{{=info_refeicao['classes']}} col-md-2'>
+<div class="row botoes-refeicoes">
+    {{for indice, info_refeicao in enumerate(info_refeicoes_do_dia):}}
+        {{if indice == 0:}}
+            <div class='{{=info_refeicao['classes']}}  col-md-offset-2 col-md-2'>
+        {{else:}}
+            <div class='{{=info_refeicao['classes']}}  col-md-offset-1 col-md-2'>
+        {{pass}}
             {{=info_refeicao['descricao']}}
         </div>
     {{pass}}
 </div>
 
 <div class="row">
+    <div class="center" style="margin-top: 2%">
     {{for preco_info in precos_info or []:}}
         <a class="btn btn-default" href="{{=URL('leitura', 'registra_compra', vars=dict(id_preco=preco_info['id']))}}" role="button">Preço {{=preco_info['descricao']}}: R$ {{=preco_info['quantia']}}</a>
     {{pass}}
+    </div>
+
 </div>
 
 
