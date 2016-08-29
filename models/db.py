@@ -69,7 +69,7 @@ db.define_table('v_precos',
                 Field('quantia', 'decimal(10,2)', label='Quantia'),
                 Field('descricao', 'string'),
                 Field('vinculo_item', 'integer'),
-                migrate=True
+                migrate=False
                 )
 
 db.define_table('tipo_leitura',
