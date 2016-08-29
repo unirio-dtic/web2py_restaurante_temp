@@ -143,10 +143,10 @@ def _busca_refeicao_atual():
 
     """
 
-    return db(db.refeicoes).select().first()  # DEBUG
+    # return db(db.refeicoes).select().first()  # DEBUG
 
-    # return db((db.refeicoes.hr_fim >= response.meta.time) &
-    #           (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
+    return db((db.refeicoes.hr_fim >= response.meta.time) &
+              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
 
 def _precos_de_refeicao(refeicao_id, vinculo_item, refeicoes_realizadas):
