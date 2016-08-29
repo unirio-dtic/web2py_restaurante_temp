@@ -71,7 +71,7 @@ def index():
 
     # Exibir as refeições cadastradas
     info_refeicoes_do_dia = []
-    contadores = {}
+    contadores = []
 
     for refeicao in refeicoes_do_dia:
         info_refeicao = {
@@ -89,7 +89,8 @@ def index():
 
         info_refeicoes_do_dia.append(info_refeicao)
 
-        contadores[refeicao.descricao] = _total_de_refeicoes(refeicao.id)
+        contadores.append({'descricao': refeicao.descricao, 'contagem': _total_de_refeicoes(refeicao.id)})
+        # contadores[refeicao.descricao] = _total_de_refeicoes(refeicao.id)
 
 
     return dict(
@@ -142,10 +143,10 @@ def _busca_refeicao_atual():
 
     """
 
-    # return db(db.refeicoes).select().first()  # DEBUG
+    return db(db.refeicoes).select().first()  # DEBUG
 
-    return db((db.refeicoes.hr_fim >= response.meta.time) &
-              (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
+    # return db((db.refeicoes.hr_fim >= response.meta.time) &
+    #           (db.refeicoes.hr_inicio <= response.meta.time)).select().first()
 
 
 def _precos_de_refeicao(refeicao_id, vinculo_item, refeicoes_realizadas):

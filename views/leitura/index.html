@@ -58,8 +58,8 @@
         <thead></thead>
         <tbody>
             <tr>
-                {{for label, count in contadores.iteritems():}}
-                    <td>({{=label}}: {{=count}})</td>
+                {{for refeicao in contadores:}}
+                    <td>({{=refeicao['descricao']}}: {{=refeicao['contagem']}})</td>
                 {{pass}}
             </tr>
         </tbody>
